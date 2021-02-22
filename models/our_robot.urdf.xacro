@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<robot name="our_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- mobile base -->
+  <xacro:include filename="$(find farscope_group_project)/models/mobile_arm/mobile_arm.urdf.xacro" />
+
+  <xacro:mobile_arm />
+
+  <!-- ****** gripper ****** -->
+  <xacro:include filename="$(find farscope_group_project)/models/gripper/simple_gripper.urdf.xacro" />
+
+  <xacro:simple_gripper parent_link="tool0">
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </xacro:simple_gripper>
+
+  <!-- ****** cameras ****** -->
+  <xacro:include filename="$(find farscope_group_project)/models/camera/simple_camera.urdf.xacro" />
+  
+  <!-- example: camera attached right above gripper -->
+  <xacro:simple_camera camera_name="camera1" parent_link="tool0" >
+    <origin xyz="0 0.1 0" rpy="0 -1.5706 0" />
+  </xacro:simple_camera>
+
+</robot>

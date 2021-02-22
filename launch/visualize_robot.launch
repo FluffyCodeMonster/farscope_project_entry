@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+
+<!-- look at the example robot in RViz and play with its joints -->
+
+<launch>
+  
+  <param name="robot_description" command="$(find xacro)/xacro $(find farscope_project_entry)/models/our_robot.urdf.xacro" />  
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" />
+
+  <node name="rviz" pkg="rviz" type="rviz" required="True" />
+
+</launch>
