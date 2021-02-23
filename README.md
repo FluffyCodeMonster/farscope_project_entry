@@ -82,7 +82,47 @@ gripper_controller.open()
 base_driver.move(-0.5, 0, 0, 0.1)
 ```
 
-## Customizing the Robot
+## Extending the software
+
+This section walks through the main `launch` file to explain how to add your own ROS nodes to the control system.  Launch files use [an XML format](http://wiki.ros.org/roslaunch/XML) to set parameters and start nodes, replacing countless `rosrun` commands in multiple terminals with a single `roslaunch` command to bring up a complicated network of interacting programs.  Here, the [`full_simulation.launch`](https://github.com/arthurrichards77/farscope_project_entry/blob/main/launch/full_simulation.launch) file brings up the entire system, including the simulation and the control system.
+
+Every launch file starts with the same preamble and opens a `<launch>` element.
+```xml
+<?xml version="1.0" ?>
+
+<launch>
+```
+> You probably don't need to change this next bit.
+
+Launch files can take [arguments](http://wiki.ros.org/roslaunch/XML#substitution_args) to handle things like finding package directories and command line arguments, so one launch file can do different things.  In this next section, two command line arguments are defined, so you can change the scenario file and turn the Gazebo GUI on and off.  They both have default settings, so you can ignore them, or put the argument in to override the default.  For example, `roslaunch farscope_project_entry use_gui:=false` will not start the Gazebo GUI, saving you some computing, and `roslaunch farscope_project_entry full_simulation.launch scenario_file:=/home/<username>/<ros_ws>/src/farscope_group_project/scenarios/all_no_random.yaml` will switch the scenario to use one provided in `farscope_group_project` that puts one trophy in the exact centre of every shelf.  You can use both arguments together.
+
+> Feel free to create your own scenario files for testing.  Commented examples can be found in the [`scenarios` folder](https://github.com/arthurrichards77/farscope_project_entry/tree/main/scenarios).
+
+In the launch file, these arguments are passed straight to the `simulator_only` launch file via an `include` tag.
+
+```xml
+  <arg name="scenario_file" default="$(find farscope_project_entry)/scenarios/all_duplicates.yaml" />
+  <arg name="use_gui" default="true" />
+  <include file="$(find farscope_project_entry)/launch/simulator_only.launch">
+    <arg name="use_gui" value="$(arg use_gui)" />
+    <arg name="scenario_file" value="$(arg scenario_file)" />
+  </include>
+```
+> You would only need to change the `simulator_only` launch file if you changed the filename of the robot description from `our_robot.urdf.xacro`.
+
+The rest of the launch file is all yours!  In the template, all it does is run the `our_controller.py` script described above.
+
+```xml
+  <!-- run example controller -->
+  <node name="robot_controller" pkg="farscope_project_entry" type="our_controller.py" />
+
+</launch>
+```
+You can remove this and replace it with many different interacting nodes to implement your control system.  They can be our own custom-written nodes living in the `farscope_project_entry` package or off-the-shelf nodes from the many hundreds of [available ROS packages](https://index.ros.org/packages/#noetic).  You can start nodes directly or include additional launch files.  Use arguments or [parameters](http://wiki.ros.org/roslaunch/XML/param) to customize node behaviours and [`<remap>` tags](http://wiki.ros.org/roslaunch/XML/remap) to redirect their interconnections.
+
+> When you write your own custom Python scripts, you'll need to [mention them in the package CMakeLists.txt file](http://wiki.ros.org/catkin/CMakeLists.txt#Optional_Step:_Specifying_Installable_Targets) and run a catkin_make before you can use them.  You can also write your own [custom nodes in C++](http://wiki.ros.org/roscpp/Tutorials) if you're so inclined.
+
+## Customizing the robot
 
 The robot is defined by the file [`our_robot.urdf.xacro`](https://github.com/arthurrichards77/farscope_project_entry/blob/main/models/our_robot.urdf.xacro) in the `models` subdirectory.  The robot is represented in [Unified Robot Description Format (URDF)](http://wiki.ros.org/urdf/Tutorials), which is a special schema in XML, and the file uses the [xacro](http://wiki.ros.org/urdf/Tutorials/Using%20Xacro%20to%20Clean%20Up%20a%20URDF%20File) macro format, _i.e._ the `.urdf.xacro` file must be pre-processed by the `xacro` program to generate a valid URDF description.  You don't need to do this yourself: it is done when the file is loaded into the ROS `robot_description` parameter in the [simulator launch file](https://github.com/arthurrichards77/farscope_project_entry/blob/main/launch/simulator_only.launch).  Xacro enables the model to include other models and to use macros when repeating elements, _e.g._ multiple cameras.  While "pure" URDF only covers the physical description of the robot, our model includes [extra `<gazebo>` elements](http://gazebosim.org/tutorials?tut=ros_gzplugins) that provide sensors and actuators in the simulation.
 
