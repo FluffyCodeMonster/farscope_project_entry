@@ -82,3 +82,53 @@ gripper_controller.open()
 base_driver.move(-0.5, 0, 0, 0.1)
 ```
 
+## Customizing the Robot
+
+The robot is defined by the file [`our_robot.urdf.xacro`](https://github.com/arthurrichards77/farscope_project_entry/blob/main/models/our_robot.urdf.xacro) in the `models` subdirectory.  The robot is represented in [Unified Robot Description Format (URDF)](http://wiki.ros.org/urdf/Tutorials), which is a special schema in XML, and the file uses the [xacro](http://wiki.ros.org/urdf/Tutorials/Using%20Xacro%20to%20Clean%20Up%20a%20URDF%20File) macro format, _i.e._ the `.urdf.xacro` file must be pre-processed by the `xacro` program to generate a valid URDF description.  You don't need to do this yourself: it is done when the file is loaded into the ROS `robot_description` parameter in the [simulator launch file](https://github.com/arthurrichards77/farscope_project_entry/blob/main/launch/simulator_only.launch).  Xacro enables the model to include other models and to use macros when repeating elements, _e.g._ multiple cameras.  While "pure" URDF only covers the physical description of the robot, our model includes [extra `<gazebo>` elements](http://gazebosim.org/tutorials?tut=ros_gzplugins) that provide sensors and actuators in the simulation.
+
+The file starts with a standard preamble to declare it as a xacro file and give the robot a name.
+```xml
+<?xml version="1.0"?>
+<robot name="our_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+```
+The mobile manipulator, _i.e._ the arm and the wheeled base, are provided by the `mobile_arm` macro in the `farscope_group_project` package.  First we include the file that defines the macro, and then we run the macro to create the base URDF.  There should be no need to change any of this bit.
+```xml
+  <!-- mobile base -->
+  <xacro:include filename="$(find farscope_group_project)/models/mobile_arm/mobile_arm.urdf.xacro" />
+
+  <xacro:mobile_arm />
+```
+The gripper is also a macro from the `farscope_group_project` package, so it must be included before it is used.
+
+> Anything that isn't in a `xacro` tag will just pass straight through the `xacro` processing.  So, if you want to develop a different gripper, or indeed add extra stuff to the robot, you can just delete this section and replace it with your own custom URDF.  *Warning:* adding static links with fixed joints is easy enough, but the learning curve to get your own custom model to actually move in Gazebo is rather steep, requiring an understanding of [`ros_control`](http://gazebosim.org/tutorials/?tut=ros_control) and getting URDF, YAML and launch files all to work together. 
+
+```xml
+  <!-- ****** gripper ****** -->
+  <xacro:include filename="$(find farscope_group_project)/models/gripper/simple_gripper.urdf.xacro" />
+```
+The `simple_gripper` macro takes two arguments.  The first is a string attribute `parent_link` that specifies to which part of the robot it is attached.  To learn the available links, run the `visualize_robot` roslaunch and inspect the `links` section of the Robot Model item in RViz.  In this initial case, its attached to the `tool0` link which is the very end of the arm, logically enough.  The second argument is an XML `origin` block that defines where on that link it's attached.  You could edit this to offset or rotate the gripper - without the pain of having to produce an actual mount!  URDF will regidly attach it through thin air.
+```xml
+  <xacro:simple_gripper parent_link="tool0">
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </xacro:simple_gripper>
+```
+Finally the example includes a camera using yet another macro from `farscope_group_project`.
+```xml
+  <!-- ****** cameras ****** -->
+  <xacro:include filename="$(find farscope_group_project)/models/camera/simple_camera.urdf.xacro" />
+```
+Again, we specify a `parent_link` attribute and an `origin` block, which in this example mounts the camera with an offset.
+```xml
+  <!-- example: camera attached right above gripper -->
+  <xacro:simple_camera camera_name="camera1" parent_link="tool0" >
+    <origin xyz="0 0.1 0" rpy="0 -1.5706 0" />
+  </xacro:simple_camera>
+```
+Feel free to mess around with the camera position.  You can affix multiple cameras by just duplicating the macro.  Be sure to give each camera a different name, so it will appear on its own ROS topic later.
+
+> You could also use custom URDF here to [add your own extra sensors](http://gazebosim.org/tutorials?tut=add_laser).
+
+Finally the model concludes by ending the `robot` element.  Job done.
+```xml
+</robot>
+```
