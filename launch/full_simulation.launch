@@ -15,6 +15,11 @@
     <arg name="scenario_file" value="$(arg scenario_file)" />
   </include>
 
+  <!-- you shouldn't need to edit the stuff *above* here in this file -->
+  <!-- as that just runs the simulator and passes your choice of scenario and GUI setting -->
+
+  <!-- edit *below* here to add your nodes and parameters for robot control -->
+
   <!-- run example controller -->
   <node name="robot_controller" pkg="farscope_project_entry" type="our_controller.py" />
 

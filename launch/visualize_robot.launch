@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 
-<!-- look at the example robot in RViz and play with its joints -->
+<!-- look at the robot in RViz and play with its joints -->
 
 <launch>
   

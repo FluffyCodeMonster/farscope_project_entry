@@ -7,8 +7,8 @@
   <!-- launch Gazebo in the Group Challenge world -->
   <!-- use `roslaunch farscope_example_robot_simulate use_gui:=false` to turn off Gazebo GUI -->
   <!-- use `roslaunch farscope_example_robot_simulate scenario:=<file>` to change scenario file -->
-  <!-- e.g. `scenario:=$(find farscope_group_project)/scenarios/all_no_random.yaml` all trophies, perfectly placed -->
-  <arg name="scenario_file" default="$(find farscope_project_entry)/scenarios/all_duplicates.yaml" />
+  <!-- e.g. `scenario:=<$(find farscope_group_project)>/scenarios/all_no_random.yaml` all trophies, perfectly placed -->
+  <arg name="scenario_file" default="$(find farscope_project_entry)/scenarios/all_no_random.yaml" />
   <arg name="use_gui" default="true" />
   <include file="$(find farscope_group_project)/launch/challenge/farscope_group_challenge_gazebo.launch">
     <arg name="gui" value="$(arg use_gui)" />
@@ -24,9 +24,10 @@
   <!-- push robot_description to factory and spawn robot in gazebo -->
   <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model robot" respawn="false" output="screen" />
 
-  <!-- start controllers for the UR10 arm and the simple gripper -->
+  <!-- start controllers for the UR10 arm -->
   <include file="$(find farscope_group_project)/launch/common/ur10_controllers.launch" />
-  <!-- you may need to change the next line if you don't use the provided gripper -->
+
+  <!-- start controller for the gripper - you may need to edit here if you don't use the provided gripper -->
   <include file="$(find farscope_group_project)/launch/common/gripper_controller.launch" />
 
 </launch>
