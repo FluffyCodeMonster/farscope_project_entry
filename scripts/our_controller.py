@@ -8,6 +8,13 @@ base_driver = BaseDriver()
 arm_mover = ArmMover()
 gripper_controller = GripperController()
 
+# wait for parameter that says spawning is finished
+rospy.loginfo("Waiting for spawning to finish")
+rate = rospy.Rate(2.0)
+while not rospy.get_param('target_spawning_complete',False):
+    rate.sleep()
+rospy.loginfo("Spawning completion detected - time to get going!")
+
 # open gripper ready
 gripper_controller.open()
 # lift arm to what seems to be right height
