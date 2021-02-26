@@ -5,10 +5,21 @@ from farscope_group_project.farscope_robot_utils import BaseDriver
 
 # This is how we'll react on the commands received
 def on_command(cmd):
-    print("CMD: " + cmd.data)
-    if cmd.data == "fw":
+    if cmd.data == "fwd":
         base_driver.move(1.0)
-        base_pub.publish("OK")
+        base_pub.publish("OK FWD")
+    elif cmd.data == "back":
+        base_driver.move(-1.0)
+        base_pub.publish("OK BACK")
+    elif cmd.data == "right":
+        base_driver.move(0, -1.0)
+        base_pub.publish("OK RIGHT")
+    elif cmd.data == "left":
+        base_driver.move(0, 1.0)
+        base_pub.publish("OK LEFT")
+    elif cmd.data == "spin":
+        base_driver.move(0, 0, 0.5, 10)
+        base_pub.publish("OK SPIN")
 
 # This will be our node name
 rospy.init_node("base_controller")
