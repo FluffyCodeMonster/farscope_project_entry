@@ -25,10 +25,10 @@ def on_command(cmd):
 rospy.init_node("base_controller")
 
 # We will subscribe to a String command topic
-base_sub = rospy.Subscriber("/base_cntrl/input", String, on_command)
+base_sub = rospy.Subscriber("/base_cntrl/in_cmd", String, on_command)
 
 # We will publish a String feedback topic
-base_pub = rospy.Publisher("/base_cntrl/output", String, queue_size=3)
+base_pub = rospy.Publisher("/base_cntrl/out_result", String, queue_size=3)
 
 # Base driver object to allow for a simple way to request movement from the actual robot
 base_driver = BaseDriver()
