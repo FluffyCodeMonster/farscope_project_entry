@@ -30,7 +30,7 @@ def create_og(map_seq_in, map_width_in, map_height_in):
     og.info.origin = Pose(Point(-1 * (map_width_in / 2.0), -1 * (map_height_in / 2.0), 0),
                            Quaternion(0, 0, 0, 1))
                            
-    # And finally the actual occupancy grid in a flattened form
+    # And finally the actual occupancy grid - first with whatever data we need there
     #grid = np.zeros((int(map_height_in), int(map_width_in)), dtype=np.int8)
     grid = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                      [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -43,6 +43,7 @@ def create_og(map_seq_in, map_width_in, map_height_in):
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=np.int8)
     
+    # And then in a flattened form
     flat_grid = grid.reshape((grid.size,)) * 100
     og.data = list(np.round(flat_grid))
     
