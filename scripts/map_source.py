@@ -31,7 +31,18 @@ def create_og(map_seq_in, map_width_in, map_height_in):
                            Quaternion(0, 0, 0, 1))
                            
     # And finally the actual occupancy grid in a flattened form
-    grid = np.zeros((int(map_height_in), int(map_width_in)), dtype=np.int8)
+    #grid = np.zeros((int(map_height_in), int(map_width_in)), dtype=np.int8)
+    grid = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=np.int8)
+    
     flat_grid = grid.reshape((grid.size,)) * 100
     og.data = list(np.round(flat_grid))
     
