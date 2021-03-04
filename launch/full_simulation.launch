@@ -23,5 +23,7 @@
   <!-- run example controller -->
   <node name="robot_controller" pkg="farscope_project_entry" type="our_controller.py" />
   <node name="robot_base_controller" pkg="farscope_project_entry" type="base_controller.py" />
-  <node name="map_source" pkg="farscope_project_entry" type="map_source.py" />
+  <node name="map_source" pkg="farscope_project_entry" type="map_source.py" clear_params="true">
+    <param name="trimmed_hector_map" value="$(find farscope_project_entry)/data/1map_grid_data_only" />
+  </node>
 </launch>
