@@ -18,7 +18,7 @@ def on_command(cmd):
         base_driver.move(0, 1.0)
         base_pub.publish("OK LEFT")
     elif cmd.data == "spin":
-        base_driver.move(0, 0, 0.5, 10)
+        base_driver.move(0, 0, 0.1, 50)
         base_pub.publish("OK SPIN")
 
 # This will be our node name
