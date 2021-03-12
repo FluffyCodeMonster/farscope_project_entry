@@ -22,8 +22,21 @@
 
   <!-- run example controller -->
   <node name="robot_controller" pkg="farscope_project_entry" type="our_controller.py" />
+  
+  <!-- Base controller -->
   <node name="robot_base_controller" pkg="farscope_project_entry" type="base_controller.py" />
-  <node name="map_source" pkg="farscope_project_entry" type="map_source.py" clear_params="true">
+  
+  <!-- Redundant map source experiment -->
+  <!--node name="map_source" pkg="farscope_project_entry" type="map_source.py" clear_params="true">
     <param name="trimmed_hector_map" value="$(find farscope_project_entry)/data/1map_grid_data_only" />
+  </node-->
+  
+  <!-- Map server provided map source -->
+  <arg name="map_file" default="$(find farscope_project_entry)/maps/sim_map.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)">
+    <param name="frame_id" value="map"/>
   </node>
+  
+  <!-- AMCL localisation algorithm -->
+  <include file="$(find farscope_project_entry)/launch/amcl.launch" />
 </launch>
