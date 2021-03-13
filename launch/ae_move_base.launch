@@ -6,7 +6,7 @@
 
   <!-- move_base -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-    <param name ="/use_sim_time" value="true"/>
+    <param name ="use_sim_time" value="true"/>
 
     <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
     <rosparam file="$(find farscope_project_entry)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
