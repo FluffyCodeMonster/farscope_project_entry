@@ -68,6 +68,10 @@
   <exec_depend>amcl</exec_depend>
   <build_depend>amcl</build_depend>
 
+  <!-- DWA planner dependency -->
+  <exec_depend>dwa_local_planner</exec_depend>
+  <build_depend>dwa_local_planner</build_depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
