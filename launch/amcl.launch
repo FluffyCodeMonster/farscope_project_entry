@@ -44,6 +44,6 @@
     <param name="odom_alpha4"               value="0.1"/>
     <param name="odom_frame_id"             value="odom"/>
     <param name="base_frame_id"             value="mpo_700_base_link"/>
-    <!-- param name="base_frame_id"             value="lidar_1_link"/ -->
+    <!--param name="base_frame_id"             value="lidar_1_link"/-->
   </node>
 </launch>
