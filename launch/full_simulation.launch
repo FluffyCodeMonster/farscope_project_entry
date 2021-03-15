@@ -41,11 +41,5 @@
   <include file="$(find farscope_project_entry)/launch/amcl.launch" />
   
   <!-- The path planning stuff -->
-  <!--node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-    <rosparam file="$(find farscope_project_entry)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
-    <rosparam file="$(find farscope_project_entry)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
-    <rosparam file="$(find farscope_project_entry)/config/local_costmap_params.yaml" command="load" />
-    <rosparam file="$(find farscope_project_entry)/config/global_costmap_params.yaml" command="load" /> 
-    <rosparam file="$(find farscope_project_entry)/config/base_local_planner_params.yaml" command="load" />
-  </node-->
+  <include file="$(find farscope_project_entry)/launch/path_plan_and_move_base.launch" />
 </launch>
