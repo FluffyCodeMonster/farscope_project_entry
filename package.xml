@@ -72,6 +72,10 @@
   <exec_depend>dwa_local_planner</exec_depend>
   <build_depend>dwa_local_planner</build_depend>
 
+  <!-- TF conversions for converting between Euler angles and Quaternions -->
+  <exec_depend>tf_conversions</exec_depend>
+  <build_depend>tf_conversions</build_depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

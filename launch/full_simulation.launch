@@ -24,7 +24,7 @@
   <node name="robot_controller" pkg="farscope_project_entry" type="our_controller.py" />
   
   <!-- Base controller -->
-  <node name="robot_base_controller" pkg="farscope_project_entry" type="base_controller.py" />
+  <node name="robot_base_controller" pkg="farscope_project_entry" type="base_controller.py" output="screen"/>
   
   <!-- Redundant map source experiment -->
   <!--node name="map_source" pkg="farscope_project_entry" type="map_source.py" clear_params="true">
