@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys, rospy
-from std_msgs.msg import String
+from std_msgs.msg import String, Int16
 from farscope_group_project.farscope_robot_utils import BaseDriver
 
 import actionlib
@@ -16,16 +16,24 @@ from visualization_msgs.msg import Marker
 from math import radians, pi
 
 class BaseController:
+    
+    # Number of seconds required to rotate 1 degree at speed of 0.1 when using base_driver.move.
+    # E.g. to rotate 15 degrees to the right we'll need: self.base_driver.move(0, 0, 0.1, 15 * ROT_1_DEG_TIME)
+    ROT_1_DEG_TIME = 0.3
+    
     def __init__(self):
         # This will be our node name
         rospy.init_node("base_controller")
 
         # We will subscribe to a String command topic
         self.base_sub = rospy.Subscriber("/base_cntrl/in_cmd", String, self.on_command)
+        
+        # We will subscribe to a String command topic
+        self.rotate_sub = rospy.Subscriber("/base_cntrl/rotate_deg", Int16, self.on_rotate)
 
         # We will publish a String feedback topic
         self.base_pub = rospy.Publisher("/base_cntrl/out_result", String, queue_size=3)
-        
+
         # We will publish a String feedback topic
         self.goal_setter = rospy.Publisher("/move_base/goal", MoveBaseActionGoal, queue_size=3)
 
@@ -34,7 +42,7 @@ class BaseController:
 
         # We will publishing to cmd_vel directly when shutting down as a crude way to stop the robot in its tracks if it is moving.
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=3)
-        
+
         # Subscribe to the move_base action server. This lets us to directly interact with move_base- to ask for paths and set goals.
         self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
 
@@ -116,6 +124,15 @@ class BaseController:
             # Start the robot moving toward the goal
             self.move(goal)
             self.base_pub.publish("OK SHELF3")
+    
+    # When user wants the robot to rotate, then this will be called with the number of degrees passed.
+    # Positive number: rotating clock wise, negative: rotating counter clock wise
+    def on_rotate(self, degs):
+        sign = -1
+        if degs.data < 0:
+            sign = 1
+        self.base_driver.move(0, 0, sign * 0.1, abs(degs.data) * self.ROT_1_DEG_TIME)
+        self.base_pub.publish("OK ROTATE")
     
     def move2(self, goal):
         mbag = MoveBaseActionGoal()
