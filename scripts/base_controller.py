@@ -69,7 +69,7 @@ class BaseController:
         # Now let's create a few shelves (their poses that is)
         self.shelves = list()
         #self.shelves.append(Pose(Point(2.0, -3.0, 0.0), quaternions[0]))
-        # Position of shelf #2 : location: {x: 2.0, y: -3.0, ang: -1.5706}
+        # Position of shelf #3 : location: {x: 2.0, y: -3.0, ang: -1.5706}
         quat = tf_conv.transformations.quaternion_from_euler(0, 0, -1.5706, axes='sxyz')
         self.shelves.append(Pose(Point(0.0, -2.5, 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
         
@@ -91,9 +91,9 @@ class BaseController:
             self.base_driver.move(0, 1.0)
             self.base_pub.publish("OK LEFT")
         elif cmd.data == "spin":
-            self.base_driver.move(0, 0, 0.1, 50)
+            self.base_driver.move(0, 0, 0.1, 105)
             self.base_pub.publish("OK SPIN")
-        elif cmd.data == "shelf2":
+        elif cmd.data == "shelf3":
             # Intialize the goal
             goal = MoveBaseGoal()
             
@@ -114,8 +114,8 @@ class BaseController:
             goal.target_pose.pose = self.shelves[0]
             
             # Start the robot moving toward the goal
-            self.move2(goal)
-            self.base_pub.publish("OK SHELF2")    
+            self.move(goal)
+            self.base_pub.publish("OK SHELF3")
     
     def move2(self, goal):
         mbag = MoveBaseActionGoal()
