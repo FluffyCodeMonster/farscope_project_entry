@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys, rospy
-from std_msgs.msg import String, Int16
+from std_msgs.msg import String, Int16, Float32
 from farscope_group_project.farscope_robot_utils import BaseDriver
 
 import actionlib
@@ -28,8 +28,20 @@ class BaseController:
         # We will subscribe to a String command topic
         self.base_sub = rospy.Subscriber("/base_cntrl/in_cmd", String, self.on_command)
         
-        # We will subscribe to a String command topic
+        # We will subscribe to an Int16 command topic to rotate cw or ccw by the passed number of degrees.
         self.rotate_sub = rospy.Subscriber("/base_cntrl/rotate_deg", Int16, self.on_rotate)
+        
+        # We will subscribe to an Int16 command topic to move right by the passed amount of meters.
+        self.rotate_sub = rospy.Subscriber("/base_cntrl/go_right", Float32, self.on_right)
+        
+        # We will subscribe to an Int16 command topic to move left by the passed amount of meters.
+        self.rotate_sub = rospy.Subscriber("/base_cntrl/go_left", Float32, self.on_left)
+        
+        # We will subscribe to an Int16 command topic to move forward by the passed amount of meters.
+        self.rotate_sub = rospy.Subscriber("/base_cntrl/go_fwd", Float32, self.on_fwd)
+        
+        # We will subscribe to an Int16 command topic to move backwards by the passed amount of meters.
+        self.rotate_sub = rospy.Subscriber("/base_cntrl/go_back", Float32, self.on_back)
 
         # We will publish a String feedback topic
         self.base_pub = rospy.Publisher("/base_cntrl/out_result", String, queue_size=3)
@@ -128,11 +140,31 @@ class BaseController:
     # When user wants the robot to rotate, then this will be called with the number of degrees passed.
     # Positive number: rotating clock wise, negative: rotating counter clock wise
     def on_rotate(self, degs):
-        sign = -1
-        if degs.data < 0:
-            sign = 1
+        sign = -1.0
+        if degs.data < 0.0:
+            sign = 1.0
         self.base_driver.move(0, 0, sign * 0.1, abs(degs.data) * self.ROT_1_DEG_TIME)
         self.base_pub.publish("OK ROTATE")
+    
+    # When user wants the robot to go right, then this will be called with the number of meters passed.
+    def on_right(self, dist):
+        self.base_driver.move(0, -1.0 * dist.data)
+        self.base_pub.publish("OK RIGHT")
+    
+    # When user wants the robot to go left, then this will be called with the number of meters passed.
+    def on_left(self, dist):
+        self.base_driver.move(0, dist.data)
+        self.base_pub.publish("OK LEFT")
+    
+    # When user wants the robot to go forward, then this will be called with the number of meters passed.
+    def on_fwd(self, dist):
+        self.base_driver.move(dist.data)
+        self.base_pub.publish("OK FWD")
+        
+    # When user wants the robot to go forward, then this will be called with the number of meters passed.
+    def on_back(self, dist):
+        self.base_driver.move(-1.0 * dist.data)
+        self.base_pub.publish("OK BACK")
     
     def move2(self, goal):
         mbag = MoveBaseActionGoal()
