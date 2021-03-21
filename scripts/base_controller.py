@@ -12,7 +12,6 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseActionGoal
 import tf_conversions as tf_conv
 #tf_conversions.transformations.quaternion_from_euler(
 
-from visualization_msgs.msg import Marker
 from math import radians, pi
 
 class BaseController:
@@ -42,6 +41,9 @@ class BaseController:
         
         # We will subscribe to an Int16 command topic to move backwards by the passed amount of meters.
         self.rotate_sub = rospy.Subscriber("/base_cntrl/go_back", Float32, self.on_back)
+        
+        # We will subscribe to an Int16 command topic to move backwards by the passed amount of meters.
+        self.rotate_sub = rospy.Subscriber("/base_cntrl/go_to_pose", Pose, self.move_to_pose)
 
         # We will publish a String feedback topic
         self.base_pub = rospy.Publisher("/base_cntrl/out_result", String, queue_size=3)
@@ -114,28 +116,7 @@ class BaseController:
             self.base_driver.move(0, 0, 0.1, 105)
             self.base_pub.publish("OK SPIN")
         elif cmd.data == "shelf3":
-            # Intialize the goal
-            goal = MoveBaseGoal()
-            
-            # Use the map frame to define goal poses
-            goal.target_pose.header.frame_id = 'odom'
-            
-            # Set the goal ID
-            self.goal_id += 1
-            goal.target_pose.header.seq = self.goal_id
-            
-            # Set the time stamp to "now"
-            goal.target_pose.header.stamp = rospy.Time.now()
-        
-            rospy.loginfo("AAAAAAA")
-            
-            print(self.shelves[0])
-            # Set the goal pose to the shelf
-            goal.target_pose.pose = self.shelves[0]
-            
-            # Start the robot moving toward the goal
-            self.move(goal)
-            self.base_pub.publish("OK SHELF3")
+            self.move_to_pose(self.shelves[0])
     
     # When user wants the robot to rotate, then this will be called with the number of degrees passed.
     # Positive number: rotating clock wise, negative: rotating counter clock wise
@@ -166,7 +147,8 @@ class BaseController:
         self.base_driver.move(-1.0 * dist.data)
         self.base_pub.publish("OK BACK")
     
-    def move2(self, goal):
+    # Moves base to the given goal. This is simpler than "move" function as it doesn't track the completion.
+    def move_to_goal(self, goal):
         mbag = MoveBaseActionGoal()
         
         # First Header
@@ -184,22 +166,50 @@ class BaseController:
         #PoseStamped(Pose(Point(2.0, -3.0, 0.0), quaternion_from_euler(0, 0, -1.5706, axes='sxyz')))
         self.goal_setter.publish(mbag)
     
+    # Creates an MoveBaseGoal object from a Pose and moves to it
+    def move_to_pose(self, pose):
+        # Intialize the goal
+        goal = MoveBaseGoal()
+        
+        # Use the map frame to define goal poses
+        goal.target_pose.header.frame_id = 'odom'
+        
+        # Set the goal ID
+        self.goal_id += 1
+        goal.target_pose.header.seq = self.goal_id
+        
+        # Set the time stamp to "now"
+        goal.target_pose.header.stamp = rospy.Time.now()
+
+        print(pose)
+
+        # Set the goal pose to the shelf
+        goal.target_pose.pose = pose
+        
+        # Start the robot moving toward the goal
+        self.move(goal)
+    
+    # Moves the base to the passed goal, which includes a Pose
     def move(self, goal):
         # Send the goal pose to the MoveBaseAction server
         self.move_base.send_goal(goal)
         
         # Allow 1 minute to get there
-        finished_within_time = self.move_base.wait_for_result(rospy.Duration(60)) 
+        finished_within_time = self.move_base.wait_for_result(rospy.Duration(45)) 
         
         # If we don't get there in time, abort the goal
         if not finished_within_time:
             self.move_base.cancel_goal()
             rospy.loginfo("Timed out achieving goal")
+            self.base_pub.publish("TIMEOUT")
         else:
             # We made it!
             state = self.move_base.get_state()
             if state == GoalStatus.SUCCEEDED:
                 rospy.loginfo("Goal succeeded!")
+                self.base_pub.publish("OK MOVE")
+            else:
+                self.base_pub.publish("BAD MOVE")
     
     def shutdown(self):
         rospy.loginfo("Stopping base controller...")
