@@ -71,7 +71,7 @@ class BaseController:
         #self.shelves.append(Pose(Point(2.0, -3.0, 0.0), quaternions[0]))
         # Position of shelf #2 : location: {x: 2.0, y: -3.0, ang: -1.5706}
         quat = tf_conv.transformations.quaternion_from_euler(0, 0, -1.5706, axes='sxyz')
-        self.shelves.append(Pose(Point(2.0, -3.0, 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
+        self.shelves.append(Pose(Point(0.0, -2.5, 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
         
         # Goal ID
         self.goal_id = 0
@@ -98,7 +98,7 @@ class BaseController:
             goal = MoveBaseGoal()
             
             # Use the map frame to define goal poses
-            goal.target_pose.header.frame_id = 'map'
+            goal.target_pose.header.frame_id = 'odom'
             
             # Set the goal ID
             self.goal_id += 1
@@ -121,7 +121,7 @@ class BaseController:
         mbag = MoveBaseActionGoal()
         
         # First Header
-        mbag.header.frame_id = 'map' # Use the map frame to define goal poses
+        mbag.header.frame_id = '' # Use the map frame to define goal poses
         mbag.header.seq = self.goal_id
         mbag.header.stamp = rospy.Time.now()
         
