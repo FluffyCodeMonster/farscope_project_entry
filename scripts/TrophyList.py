@@ -38,9 +38,7 @@ class TropyList:
     def get_list(self, req):
         rospy.loginfo('List requested')
          #Create list
-         #Info from scenario file is already a list
-         
-        
+         #insert create_trophy_list function
         response = ListResponse()
         return response
     

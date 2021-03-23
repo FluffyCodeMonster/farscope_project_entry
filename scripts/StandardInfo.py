@@ -21,9 +21,9 @@ import json
 from std_msgs.msg import String
 from strategy.srv import Info, InfoResponse
 
-with open("scenario_file.json") as file:
+with open("StandardPath_file.json") as file:
     
-    scenario = json.load(file)
+    standard_path = json.load(file)
     
 with open("standardArm_file.json") as file:
     
@@ -35,7 +35,7 @@ with open("InfoGain_file.json") as file:
     
 def info_service(req):
 
-    return InfoResponse(scenario, standard_arm, info_gain)
+    return InfoResponse(standard_path, standard_arm, info_gain)
 
 def standard_info():
     
