@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from str_msgs.msg import String, Float32
+from std_msgs.msg import String, Float32, Int16
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
 import tf_conversions as tf_conv
 import rospy
@@ -19,7 +19,7 @@ class OrganizeMovement:
         self.trophy_info = None
 
         self.pub_base = rospy.Publisher('/base_cntrl/go_to_pose', Pose, queue_size=3)
-        self.pub_arm = rospy.Publisher('/arm_cmd', Float32, queue_size=3)
+        self.pub_arm = rospy.Publisher('/arm_cmd', Int16, queue_size=3)
         self.pub_gripper = rospy.Publisher('/start_gripper', String, queue_size=3)
 
         self.sub_cmd = rospy.Subscriber("/target_move", String, self.on_activation)
