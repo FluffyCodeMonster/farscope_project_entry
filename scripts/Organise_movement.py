@@ -2,7 +2,7 @@
 
 from std_msgs.msg import String, Float32, Int16
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
-import tf_conversions as tf_conv
+#import tf_conversions as tf_conv
 import rospy
 import json
 
@@ -27,11 +27,20 @@ class OrganizeMovement:
         self.sub_arm = rospy.Subscriber("/arm_result", String, self.arm_in_position)
         self.sub_trophy = rospy.Subscriber("/trophy_list", String, self.trophy_update)
 
+    def euler_to_quaternion(r):
+        (yaw, pitch, roll) = (r[0], r[1], r[2])
+        qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+        qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+        qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        return [qx, qy, qz, qw]
+
     def on_activation(self, msg):
         command = json.loads(msg.data)
         self.goal = command["id"]
         self.trophy_info = command["description"]
-        quat = tf_conv.transformations.quaternion_from_euler(0, 0, float(self.trophy_info["alpha"]), axes='sxyz')
+        #quat = tf_conv.transformations.quaternion_from_euler(0, 0, float(self.trophy_info["alpha"]), axes='sxyz')
+        quat = euler_to_quaternion(0, 0, float(self.trophy_info["alpha"]))
         pose = (Pose(Point(float(self.trophy_info["x"]),
                            float(self.trophy_info["y"]), 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
         self.pub_base.publish(pose)
