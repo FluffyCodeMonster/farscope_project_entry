@@ -5,7 +5,7 @@ from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
 #import tf_conversions as tf_conv
 import rospy
 import json
-
+import numpy as np
 
 class OrganizeMovement:
     def __init__(self):
@@ -27,8 +27,7 @@ class OrganizeMovement:
         self.sub_arm = rospy.Subscriber("/arm_result", String, self.arm_in_position)
         self.sub_trophy = rospy.Subscriber("/trophy_list", String, self.trophy_update)
 
-    def euler_to_quaternion(r):
-        (yaw, pitch, roll) = (r[0], r[1], r[2])
+    def euler_to_quaternion(self, yaw, pitch, roll):
         qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
         qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
         qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
