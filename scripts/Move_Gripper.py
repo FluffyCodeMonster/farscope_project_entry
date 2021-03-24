@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # -*- coding: utf-8 -*-
 """
 Created on Sat Mar 20 15:43:04 2021
@@ -9,7 +11,6 @@ Created on Sat Mar 20 15:43:04 2021
 Organise movement node 
 
 """
-#!/usr/bin/env python
 
 from std_msgs.msg import String, Float32
 import rospy
