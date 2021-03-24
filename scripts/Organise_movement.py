@@ -40,7 +40,7 @@ class OrganizeMovement:
         self.goal = command["id"]
         self.trophy_info = command["description"]
         #quat = tf_conv.transformations.quaternion_from_euler(0, 0, float(self.trophy_info["alpha"]), axes='sxyz')
-        quat = euler_to_quaternion(0, 0, float(self.trophy_info["alpha"]))
+        quat = self.euler_to_quaternion(0, 0, float(self.trophy_info["alpha"]))
         pose = (Pose(Point(float(self.trophy_info["x"]),
                            float(self.trophy_info["y"]), 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
         self.pub_base.publish(pose)
