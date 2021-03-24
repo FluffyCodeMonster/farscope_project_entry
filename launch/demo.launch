@@ -14,6 +14,10 @@
     <arg name="use_gui" value="$(arg use_gui)" />
     <arg name="scenario_file" value="$(arg scenario_file)" />
   </include>
+  
+  <!-- load the example robot description-->
+  <param name="robot_description" command="$(find xacro)/xacro $(find farscope_project_entry)/models/farscope_new_gripper_robot.urdf.xacro" />
+
 
   <!-- you shouldn't need to edit the stuff *above* here in this file -->
   <!-- as that just runs the simulator and passes your choice of scenario and GUI setting -->
@@ -21,13 +25,13 @@
   <!-- edit *below* here to add your nodes and parameters for robot control -->
   
   <!-- Base controller -->
-  <node name="robot_base_controller" pkg="farscope_project_entry" type="base_controller.py" output="screen"/>
+  <node name="robot_base_controller" pkg="farscope_project_entry" type="scripts/base_controller.py" output="screen"/>
 
-  <node name="Score1" pkg="farscope_project_entry" type="Score1.py"/>
+  <node name="Score1" pkg="farscope_project_entry" type="scripts/Score1.py"/>
 
-  <node name="organize_movement" pkg="farscope_project_entry" type="Organise_movement.py"/>
+  <node name="organize_movement" pkg="farscope_project_entry" type="scripts/Organise_movement.py"/>
 
-  <node name="move_gripper" pkg="farscope_project_entry" type="Move_Gripper.py"/>
+  <node name="move_gripper" pkg="farscope_project_entry" type="scripts/Move_Gripper.py"/>
   
   <!-- Redundant map source experiment -->
   <!--node name="map_source" pkg="farscope_project_entry" type="map_source.py" clear_params="true">
