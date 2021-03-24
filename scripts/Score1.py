@@ -1,15 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar 18 17:30:38 2021
-
-@author: ep15603
-"""
-
-"""
-
-Score 1 node 
-
-"""
 #!/usr/bin/env python
 
 import rospy
@@ -49,10 +37,10 @@ def main():
     message = {
         "id": "131",
         "description": {
-            "x": 20,
-            "y": 30,
-            "alpha": -90,
-            "z": 40
+            "x": 0.0,
+            "y": -2.5,
+            "alpha": -1.5706,
+            "z": 1.0
         }
     }
     

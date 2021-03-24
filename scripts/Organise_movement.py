@@ -1,19 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Mar 19 16:43:20 2021
-
-@author: ep15603
-"""
-
-"""
-
-Organise movement node 
-
-"""
 #!/usr/bin/env python
 
 from str_msgs.msg import String, Float32
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
+import tf_conversions as tf_conv
 import rospy
 import json
 
@@ -42,8 +31,10 @@ class OrganizeMovement:
         command = json.loads(msg.data)
         self.goal = command["id"]
         self.trophy_info = command["description"]
-        base_position = (float(self.trophy_info["x"]), float(self.trophy_info["y"]), float(self.trophy_info["alpha"]))
-        self.pub_base.publish(base_position)
+        quat = tf_conv.transformations.quaternion_from_euler(0, 0, float(self.trophy_info["alpha"]), axes='sxyz')
+        pose = (Pose(Point(float(self.trophy_info["x"]),
+                           float(self.trophy_info["y"]), 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
+        self.pub_base.publish(pose)
 
     def base_in_position(self, msg):
         self.pub_arm.publish(float(self.trophy_info["z"]))
