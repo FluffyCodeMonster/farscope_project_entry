@@ -11,7 +11,7 @@ Organise movement node
 """
 #!/usr/bin/env python
 
-from str_msgs.msg import String, Float32
+from std_msgs.msg import String, Float32
 import rospy
 import json
 
