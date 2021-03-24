@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+
+<!-- simulate example robot with example controller in the challenge scenario -->
+
+<launch>
+
+  <!-- launch Gazebo in the Group Challenge world -->
+  <!-- use `roslaunch farscope_example_robot_simulate use_gui:=false` to turn off Gazebo GUI -->
+  <!-- use `roslaunch farscope_example_robot_simulate scenario:=<file>` to change scenario file -->
+  <!-- e.g. `scenario:=$(find farscope_group_project)/scenarios/all_no_random.yaml` all trophies, perfectly placed -->
+  <arg name="scenario_file" default="$(find farscope_project_entry)/scenarios/all_duplicates.yaml" />
+  <arg name="use_gui" default="true" />
+  <include file="$(find farscope_project_entry)/launch/simulator_only.launch">
+    <arg name="use_gui" value="$(arg use_gui)" />
+    <arg name="scenario_file" value="$(arg scenario_file)" />
+  </include>
+
+  <!-- you shouldn't need to edit the stuff *above* here in this file -->
+  <!-- as that just runs the simulator and passes your choice of scenario and GUI setting -->
+
+  <!-- edit *below* here to add your nodes and parameters for robot control -->
+  
+  <!-- Base controller -->
+  <node name="robot_base_controller" pkg="farscope_project_entry" type="base_controller.py" output="screen"/>
+
+  <node name="Score1" pkg="farscope_project_entry" type="Score1.py"/>
+
+  <node name="organize_movement" pkg="farscope_project_entry" type="Organise_movement.py"/>
+
+  <node name="move_gripper" pkg="farscope_project_entry" type="Move_Gripper.py"/>
+  
+  <!-- Redundant map source experiment -->
+  <!--node name="map_source" pkg="farscope_project_entry" type="map_source.py" clear_params="true">
+    <param name="trimmed_hector_map" value="$(find farscope_project_entry)/data/1map_grid_data_only" />
+  </node-->
+  
+  <!-- Map server provided map source -->
+  <arg name="map_file" default="$(find farscope_project_entry)/maps/sim_map.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)">
+    <param name="frame_id" value="map"/>
+  </node>
+  
+  <!-- AMCL localisation algorithm -->
+  <include file="$(find farscope_project_entry)/launch/amcl.launch" />
+  
+  <!-- The path planning stuff -->
+  <include file="$(find farscope_project_entry)/launch/path_plan_and_move_base.launch" />
+</launch>
