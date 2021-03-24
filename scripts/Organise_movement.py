@@ -37,7 +37,7 @@ class OrganizeMovement:
         self.pub_base.publish(pose)
 
     def base_in_position(self, msg):
-        self.pub_arm.publish(float(self.trophy_info["z"]))
+        self.pub_arm.publish(int(self.trophy_info["z"]))
 
     def arm_in_position(self, msg):
         self.pub_gripper.publish("grip")
