@@ -9,7 +9,7 @@ from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseActionGoal
 #from tf.transformations import quaternion_from_euler
 #from tf_conversions.transformations import quaternion_from_euler
-import tf_conversions as tf_conv
+#import tf_conversions as tf_conv
 #tf_conversions.transformations.quaternion_from_euler(
 
 from math import radians, pi
@@ -92,7 +92,8 @@ class BaseController:
         self.shelves = list()
         #self.shelves.append(Pose(Point(2.0, -3.0, 0.0), quaternions[0]))
         # Position of shelf #3 : location: {x: 2.0, y: -3.0, ang: -1.5706}
-        quat = tf_conv.transformations.quaternion_from_euler(0, 0, -1.5706, axes='sxyz')
+        #quat = tf_conv.transformations.quaternion_from_euler(0, 0, -1.5706, axes='sxyz')
+        quat = [0,0,0.7,-0.7]
         self.shelves.append(Pose(Point(0.0, -2.5, 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
         
         # Goal ID
