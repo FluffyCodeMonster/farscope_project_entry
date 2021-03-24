@@ -27,7 +27,7 @@ class OrganizeMovement:
         self.sub_arm = rospy.Subscriber("/arm_result", String, self.arm_in_position)
         self.sub_trophy = rospy.Subscriber("/trophy_list", String, self.trophy_update)
 
-    def euler_to_quaternion(self, yaw, pitch, roll):
+    def euler_to_quaternion(self, roll, pitch, yaw):
         qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
         qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
         qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
