@@ -50,9 +50,31 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>farscope_group_project</build_depend>
+  
+  <!-- Adding move_base dependency for path generation algorithms  -->
+  <build_depend>move_base</build_depend>
+  
   <build_export_depend>farscope_group_project</build_export_depend>
   <exec_depend>farscope_group_project</exec_depend>
+  
+  <!-- Adding move_base dependency for path generation algorithms  -->
+  <exec_depend>move_base</exec_depend>
 
+  <!-- Map server dependency -->
+  <exec_depend>map_server</exec_depend>
+  <build_depend>map_server</build_depend>
+
+  <!-- AMCL dependency -->
+  <exec_depend>amcl</exec_depend>
+  <build_depend>amcl</build_depend>
+
+  <!-- DWA planner dependency -->
+  <exec_depend>dwa_local_planner</exec_depend>
+  <build_depend>dwa_local_planner</build_depend>
+
+  <!-- TF conversions for converting between Euler angles and Quaternions -->
+  <exec_depend>tf_conversions</exec_depend>
+  <build_depend>tf_conversions</build_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

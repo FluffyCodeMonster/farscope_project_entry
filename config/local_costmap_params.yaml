@@ -1,0 +1,19 @@
+local_costmap:
+#  global_frame: odom
+#  robot_base_frame: base_link
+
+  global_frame: map
+  #robot_base_frame: lidar_1_link
+  robot_base_frame: mpo_700_base_link
+
+  update_frequency: 10.0
+  publish_frequency: 10.0
+  transform_tolerance: 0.5
+  #transform_tolerance: 2
+
+  static_map: false  
+  rolling_window: true
+  width: 3
+  height: 3
+  resolution: 0.05
+  
