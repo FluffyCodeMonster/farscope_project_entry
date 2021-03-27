@@ -1,0 +1,46 @@
+Launch full simulation:
+roslaunch farscope_project_entry full_simulation.launch
+
+Launch hector mapping:
+rosrun hector_mapping hector_mapping scan:=/lidar_1/scan_filtered _base_frame:=base_link _odom_frame:=odom _map_frame:=hm_map map:=hm_map _map_resolution:=0.025
+
+Launch rviz:
+rviz
+
+Peep at cmd_vel:
+rostopic echo cmd_vel
+
+Send commands to robot:
+rostopic pub /base_cntrl/in_cmd std_msgs/String "fwd"
+rostopic pub /base_cntrl/in_cmd std_msgs/String "back"
+rostopic pub /base_cntrl/in_cmd std_msgs/String "left"
+rostopic pub /base_cntrl/in_cmd std_msgs/String "right"
+rostopic pub /base_cntrl/in_cmd std_msgs/String "spin"
+
+Install all deps:
+rosdep install --from-paths src --ignore-src -r -y
+
+Localise with AMCL:
+roslaunch test_localisation amcl.launch
+
+Start map server:
+rosrun map_server map_server frame_id:=hm_map sim_map.yaml
+
+Harvest a map with map_server:
+rosrun map_server map_saver map:=/hm_map -f sim_map
+
+
+Deps:
+sudo apt install ros-noetic-dwa-local-planner
+sudo apt install ros-noetic-tf2-sensor-msgs
+sudo apt install ros-noetic-move-base
+sudo apt install ros-noetic-turtlebot3-navigation
+sudo apt install ros-noetic-turtlebot3
+
+
+
+Found 1 error(s).
+
+ERROR The following nodes should be connected but aren't:
+ * /move_base->/move_base (/move_base/local_costmap/footprint)
+ * /move_base->/move_base (/move_base/global_costmap/footprint)
