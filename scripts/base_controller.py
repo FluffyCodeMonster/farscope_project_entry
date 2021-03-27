@@ -5,7 +5,7 @@ from farscope_group_project.farscope_robot_utils import BaseDriver
 
 import actionlib
 from actionlib_msgs.msg import *
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist, PoseWithCovarianceStamped
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseActionGoal
 #from tf.transformations import quaternion_from_euler
 #from tf_conversions.transformations import quaternion_from_euler
@@ -45,6 +45,9 @@ class BaseController:
         
         # We will subscribe to an Int16 command topic to move backwards by the passed amount of meters.
         self.rotate_sub = rospy.Subscriber("/base_cntrl/go_to_pose", Pose, self.move_to_pose)
+
+        # We will subscribe to an Int16 command topic to move backwards by the passed amount of meters.
+        self.rotate_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.robot_pose)
 
         # We will publish a String feedback topic
         self.base_pub = rospy.Publisher("/base_cntrl/out_result", String, queue_size=3)
@@ -229,6 +232,21 @@ class BaseController:
         # Stop the robot
         self.cmd_vel_pub.publish(Twist())
         rospy.sleep(1)
+
+    def robot_pose(self, msg):
+        rospy.loginfo("Finding robot pose")
+        data=""
+        #Subscribed coordinate information
+        x = msg.pose.pose.position.x
+        y = msg.pose.pose.position.y
+        #Subscribed quaternion information, used to indicate the direction
+        orien_z = msg.pose.pose.orientation.z
+        orien_w = msg.pose.pose.orientation.w
+
+        data = "x:" + str(x) + ", y: " + str(y)+ ", z: " + str(orien_z)+ ", w: " + str(orien_w)
+        rospy.loginfo(data)
+        
+        
     
 if __name__ == '__main__':
     try:
