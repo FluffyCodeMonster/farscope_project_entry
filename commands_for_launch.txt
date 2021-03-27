@@ -17,6 +17,11 @@ rostopic pub /base_cntrl/in_cmd std_msgs/String "left"
 rostopic pub /base_cntrl/in_cmd std_msgs/String "right"
 rostopic pub /base_cntrl/in_cmd std_msgs/String "spin"
 
+rostopic pub /base_cntrl/rotate_deg std_msgs/Int16 15
+rostopic pub /base_cntrl/rotate_deg std_msgs/Int16 '{data: -15}'
+rostopic pub -1 /base_cntrl/go_to_pose geometry_msgs/Pose '{position: {x: -1.0, y: -2.0, z: 0.0}, orientation: {w: 1.0}}'
+rostopic pub /base_cntrl/go_fwd std_msgs/Float32 0.1
+
 Install all deps:
 rosdep install --from-paths src --ignore-src -r -y
 
@@ -39,8 +44,63 @@ sudo apt install ros-noetic-turtlebot3
 
 
 
-Found 1 error(s).
+position: 
+  x: 0.0
+  y: -2.5
+  z: 0.0
+orientation: 
+  x: 0.0
+  y: 0.0
+  z: -0.7070373657757999
+  w: 0.707176189783577
+  
+Interface description:
+We have the following topics that base controller subscribes to:
+/base_cntrl/go_back
+/base_cntrl/go_fwd
+/base_cntrl/go_left
+/base_cntrl/go_right
+/base_cntrl/go_to_pose
+/base_cntrl/in_cmd
+/base_cntrl/rotate_deg
 
-ERROR The following nodes should be connected but aren't:
- * /move_base->/move_base (/move_base/local_costmap/footprint)
- * /move_base->/move_base (/move_base/global_costmap/footprint)
+And the following topic that base controller publishes:
+/base_cntrl/out_result
+
+The go_back, go_fwd, go_left and go_right topics can be used to move the robot by an arbitrary distance in the corresponding directions. E.g. to move 10cm to the right, one could publish this from the command line:
+
+rostopic pub /base_cntrl/go_right std_msgs/Float32 0.1
+
+The go_to_pose topic allows to set an arbitrary goal, which the base will plan a path and navigate to. To use it, one could publish this from the command line:
+
+rostopic pub -1 /base_cntrl/go_to_pose geometry_msgs/Pose '{position: {x: -1.0, y: -2.0, z: 0.0}, orientation: {w: 1.0}}'
+
+And that would take the robot to somewhere in the middle of the map.
+
+The rotate_deg topic allows to perform a clock-wise or counter-clock-wise rotation of the base by an arbitrary number of degrees. To rotate 25 degrees clock wise, one could publish this from the command line:
+
+rostopic pub /base_cntrl/rotate_deg std_msgs/Int16 '{data: 25}'
+ 
+Or for counter-clock-wise rotation:
+rostopic pub /base_cntrl/rotate_deg std_msgs/Int16 '{data: -25}'
+ 
+The in_cmd topic is mostly used for testing and accepts the following String parameters: "fwd", "back", "right", "left", "spin" and "shelf3". The "fwd", "back", "right", "left" commands will move the base by 1m accordingly, so e.g.:
+
+rostopic pub /base_cntrl/in_cmd std_msgs/String "fwd"
+
+will move the base forward by 1m.
+
+The "spin" command will make the robot spin 360 degrees. And the "shelf3" command will navigate the robot to a vicinity of shelf #3 although the proximity to the shelf will be rather loose. 
+
+And finally the out_result topic can be used to get a feedback about the completion of the required action. So if one subscribes to it:
+
+rostopic echo /base_cntrl/out_result
+
+then it will be returning status strings, e.g.:
+data: "OK LEFT"
+---
+data: "OK BACK"
+---
+data: "OK ROTATE"
+---
+
