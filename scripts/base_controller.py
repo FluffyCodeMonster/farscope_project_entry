@@ -13,6 +13,7 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseActionGoal
 #tf_conversions.transformations.quaternion_from_euler(
 
 from math import radians, pi
+import numpy as np
 
 class BaseController:
     
@@ -74,6 +75,13 @@ class BaseController:
             rate.sleep()
         rospy.loginfo("Spawning completion detected - time to get going!")
 
+    def euler_to_quaternion(self, roll, pitch, yaw):
+        qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+        qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+        qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        return [qx, qy, qz, qw]
+
     # This will prepare goals and the end angles (think shelf #1, #2, etc)
     def prepare_goals(self):
         # Create a list to hold the target quaternions (orientations)
@@ -93,7 +101,8 @@ class BaseController:
         #self.shelves.append(Pose(Point(2.0, -3.0, 0.0), quaternions[0]))
         # Position of shelf #3 : location: {x: 2.0, y: -3.0, ang: -1.5706}
         #quat = tf_conv.transformations.quaternion_from_euler(0, 0, -1.5706, axes='sxyz')
-        quat = [0,0,0.7,-0.7]
+        quat = self.euler_to_quaternion(0, 0, -1.5706)
+        #quat = [0,0,0.7,-0.7]
         self.shelves.append(Pose(Point(0.0, -2.5, 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
         
         # Goal ID
