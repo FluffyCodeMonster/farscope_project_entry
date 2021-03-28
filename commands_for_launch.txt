@@ -77,6 +77,23 @@ rostopic pub -1 /base_cntrl/go_to_pose geometry_msgs/Pose '{position: {x: -1.0, 
 
 And that would take the robot to somewhere in the middle of the map.
 
+To get a cost of a path to a given pose:
+rostopic pub -1 /base_cntrl/path_cost_qry geometry_msgs/Pose '{position: {x: -1.0, y: -2.0, z: 0.0}, orientation: {w: 1.0}}'
+
+And the result will be published in: /base_cntrl/path_cost
+
+Example returns:
+rostopic echo /base_cntrl/path_cost
+WARNING: no messages received and simulated time is active.
+Is /clock being published?
+data: 2.239917755126953
+---
+data: 2.044374942779541
+---
+data: 1.0816153287887573
+---
+
+
 The rotate_deg topic allows to perform a clock-wise or counter-clock-wise rotation of the base by an arbitrary number of degrees. To rotate 25 degrees clock wise, one could publish this from the command line:
 
 rostopic pub /base_cntrl/rotate_deg std_msgs/Int16 '{data: 25}'
