@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys, rospy
-from std_msgs.msg import String, Int16, Float32
+from std_msgs.msg import String, Int16, Float32, Float32MultiArray, MultiArrayDimension
 from farscope_group_project.farscope_robot_utils import BaseDriver
 
 import actionlib
@@ -72,6 +72,10 @@ class BaseController:
         # We will publishing to cmd_vel directly when shutting down as a crude way to stop the robot in its tracks if it is moving.
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=3)
 
+        # Publish list of cost to travel to each shelf
+        # TODO: Uncomment
+        # self.get_cost_list = rospy.Publisher("/base_cntrl/cost_list", Float32MultiArray(), queue_size=3)
+
         # Subscribe to the move_base action server. This lets us to directly interact with move_base- to ask for paths and set goals.
         self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
 
@@ -91,6 +95,16 @@ class BaseController:
         while not rospy.get_param('target_spawning_complete',False):
             rate.sleep()
         rospy.loginfo("Spawning completion detected - time to get going!")
+
+        # init ros standard array message
+        # TODO: Uncomment
+        # self.multiArray = Float32MultiArray()
+        # self.multiArray.data = list()
+        # allocate_array = MultiArrayDimension()
+        # allocate_array.label = "costs"
+        # allocate_array.size = 1
+        # allocate_array.stride = 1
+        # self.multiArray.layout.dim.append(allocate_array)
 
     def euler_to_quaternion(self, roll, pitch, yaw):
         qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
@@ -113,14 +127,21 @@ class BaseController:
 #            q = Quaternion(*q_angle)
 #            quaternions.append(q)
             
-        # Now let's create a few shelves (their poses that is)
+        # # Now let's create a few shelves (their poses that is)
         self.shelves = list()
-        #self.shelves.append(Pose(Point(2.0, -3.0, 0.0), quaternions[0]))
-        # Position of shelf #3 : location: {x: 2.0, y: -3.0, ang: -1.5706}
-        #quat = tf_conv.transformations.quaternion_from_euler(0, 0, -1.5706, axes='sxyz')
-        quat = self.euler_to_quaternion(0, 0, -1.5706)
-        #quat = [0,0,0.7,-0.7]
-        self.shelves.append(Pose(Point(0.0, -2.5, 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
+        self.shelves.append(Pose(Point(2.0, 0.0, 0.0), euler_to_quaternion(0,0,-1.5706))) # Shelf 1
+        self.shelves.append(Pose(Point(2.0, -1.5, 0.0), euler_to_quaternion(0,0,-1.5706))) # Shelf 2
+        self.shelves.append(Pose(Point(2.0, -3.0, 0.0), euler_to_quaternion(0,0,-1.5706))) # Shelf 3
+        self.shelves.append(Pose(Point(1.0, -4.0, 0.0), euler_to_quaternion(0,0,3.1416))) # Shelf 4
+        self.shelves.append(Pose(Point(-0.5, -4.0, 0.0), euler_to_quaternion(0,0,3.1416))) # Shelf 5
+        self.shelves.append(Pose(Point(-2.0, -4.0, 0.0), euler_to_quaternion(0,0,3.1416))) # Shelf 6
+        self.shelves.append(Pose(Point(-3.0, -3.0, 0.0), euler_to_quaternion(0,0,1.5706))) # Shelf 7
+        self.shelves.append(Pose(Point(-2.0, -1.0, 0.0), euler_to_quaternion(0,0,0))) # Shelf 8
+
+        # #quat = tf_conv.transformations.quaternion_from_euler(0, 0, -1.5706, axes='sxyz')
+        # quat = self.euler_to_quaternion(0, 0, -1.5706)
+        # #quat = [0,0,0.7,-0.7]
+        # self.shelves.append(Pose(Point(0.0, -2.5, 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
         
         # Goal ID
         self.goal_id = 0
@@ -144,6 +165,10 @@ class BaseController:
             self.base_pub.publish("OK SPIN")
         elif cmd.data == "shelf3":
             self.move_to_pose(self.shelves[0])
+        # TODO: Uncomment
+        # elif cmd.data == "get_cost_of_travel":
+            # publish list of 
+            # self.get_cost_list.publish(calculate_cost_of_travel())
     
     # When user wants the robot to rotate, then this will be called with the number of degrees passed.
     # Positive number: rotating clock wise, negative: rotating counter clock wise
@@ -300,6 +325,48 @@ class BaseController:
         
         # Finally publish the result
         self.path_cost_pub.publish(cost)
+
+    def calculate_cost_of_travel(self):
+    
+        cost_list = list()
+        
+        # We can only proceed if current_pose is known
+        if (not(self.latest_pose_stamped is None)):
+            target_pose_stamped = PoseStamped()
+            
+            # First Header
+            target_pose_stamped.header.frame_id = self.latest_pose_stamped.header.frame_id
+            target_pose_stamped.header.seq = self.latest_pose_stamped.header.seq
+            target_pose_stamped.header.stamp = rospy.Time.now()
+
+            for shelf in range(0,8):
+                # Now the actual pose
+                target_pose_stamped.pose = self.shelves[shelf]
+                
+                # Now let's get the most optimal plan that the current planner can give us
+                req = GetPlan()
+                req.start = self.latest_pose_stamped
+                req.goal = target_pose_stamped
+                req.tolerance = .5
+                response = self.get_plan(req.start, req.goal, req.tolerance)
+                # print(response.plan)
+                
+                # Now that we have the plan, let's go through it and calculate the cost
+                prev_pose = None
+                cost = 0
+                for cur_pose in response.plan.poses:
+                    if (not(prev_pose is None)):
+                        # Using Pythagorean theorem to calculate distance between two points
+                        cost += sqrt((cur_pose.pose.position.x - prev_pose.pose.position.x) ** 2 + (cur_pose.pose.position.y - prev_pose.pose.position.y) ** 2)
+                    prev_pose = cur_pose
+                
+                rospy.loginfo(shelf)
+                rospy.loginfo(cost)
+                cost_list.append(cost)
+
+        self.multiArray.data = cost_list
+        # return list of cost to travel to each shelf
+        return self.multiArray.data
 
 if __name__ == '__main__':
     try:
