@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 import sys, rospy
-from std_msgs.msg import String, Int16, Float32
+from std_msgs.msg import String, Int16, Float32, Float32MultiArray, MultiArrayDimension
 from farscope_group_project.farscope_robot_utils import BaseDriver
 
 import actionlib
 from actionlib_msgs.msg import *
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist, PoseWithCovarianceStamped
+from nav_msgs.msg import Path
+from nav_msgs.srv import GetPlan, GetPlanRequest
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseActionGoal
 #from tf.transformations import quaternion_from_euler
 #from tf_conversions.transformations import quaternion_from_euler
 #import tf_conversions as tf_conv
 #tf_conversions.transformations.quaternion_from_euler(
 
-from math import radians, pi
+from math import radians, pi, sqrt
 import numpy as np
 
 class BaseController:
@@ -32,19 +34,31 @@ class BaseController:
         self.rotate_sub = rospy.Subscriber("/base_cntrl/rotate_deg", Int16, self.on_rotate)
         
         # We will subscribe to an Int16 command topic to move right by the passed amount of meters.
-        self.rotate_sub = rospy.Subscriber("/base_cntrl/go_right", Float32, self.on_right)
+        self.go_right_sub = rospy.Subscriber("/base_cntrl/go_right", Float32, self.on_right)
         
         # We will subscribe to an Int16 command topic to move left by the passed amount of meters.
-        self.rotate_sub = rospy.Subscriber("/base_cntrl/go_left", Float32, self.on_left)
+        self.go_left_sub = rospy.Subscriber("/base_cntrl/go_left", Float32, self.on_left)
         
         # We will subscribe to an Int16 command topic to move forward by the passed amount of meters.
-        self.rotate_sub = rospy.Subscriber("/base_cntrl/go_fwd", Float32, self.on_fwd)
+        self.go_fwd_sub = rospy.Subscriber("/base_cntrl/go_fwd", Float32, self.on_fwd)
         
         # We will subscribe to an Int16 command topic to move backwards by the passed amount of meters.
-        self.rotate_sub = rospy.Subscriber("/base_cntrl/go_back", Float32, self.on_back)
+        self.go_back_sub = rospy.Subscriber("/base_cntrl/go_back", Float32, self.on_back)
         
         # We will subscribe to an Int16 command topic to move backwards by the passed amount of meters.
-        self.rotate_sub = rospy.Subscriber("/base_cntrl/go_to_pose", Pose, self.move_to_pose)
+        self.move_to_pose_sub = rospy.Subscriber("/base_cntrl/go_to_pose", Pose, self.move_to_pose)
+
+        # We will subscribe to an Int16 command topic to move backwards by the passed amount of meters.
+        self.amcl_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.robot_pose)
+
+        # We will subscribe to an Int16 command topic to move backwards by the passed amount of meters.
+        self.path_cost_qry_sub = rospy.Subscriber("/base_cntrl/path_cost_qry", Pose, self.publish_path_cost)
+        
+        # Getting the service for path planning
+        self.get_plan = rospy.ServiceProxy('/move_base/make_plan', GetPlan)
+        
+        # We will publish a Float32 value as a response to the path cost query
+        self.path_cost_pub = rospy.Publisher("/base_cntrl/path_cost", Float32, queue_size=3)
 
         # We will publish a String feedback topic
         self.base_pub = rospy.Publisher("/base_cntrl/out_result", String, queue_size=3)
@@ -58,8 +72,14 @@ class BaseController:
         # We will publishing to cmd_vel directly when shutting down as a crude way to stop the robot in its tracks if it is moving.
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=3)
 
+        # Publish list of cost to travel to each shelf
+        self.get_cost_list = rospy.Publisher("/base_cntrl/cost_list", Float32MultiArray, queue_size=3)
+
         # Subscribe to the move_base action server. This lets us to directly interact with move_base- to ask for paths and set goals.
         self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
+
+        # We'll be keeping the current robot pose in this variable. We'll populate it with AMCL subscription callback.
+        self.latest_pose_stamped = None
 
         # Clean up on shutdown        
         rospy.on_shutdown(self.shutdown)
@@ -75,12 +95,22 @@ class BaseController:
             rate.sleep()
         rospy.loginfo("Spawning completion detected - time to get going!")
 
+        # init ros standard array message
+        self.multiArray = Float32MultiArray()
+        self.multiArray.data = list()
+        allocate_array = MultiArrayDimension()
+        allocate_array.label = "costs"
+        allocate_array.size = 1
+        allocate_array.stride = 1
+        self.multiArray.layout.dim.append(allocate_array)
+
     def euler_to_quaternion(self, roll, pitch, yaw):
         qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
         qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
         qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
         qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-        return [qx, qy, qz, qw]
+        #return [qx, qy, qz, qw]
+        return Quaternion(qx, qy, qz, qw)
 
     # This will prepare goals and the end angles (think shelf #1, #2, etc)
     def prepare_goals(self):
@@ -96,14 +126,21 @@ class BaseController:
 #            q = Quaternion(*q_angle)
 #            quaternions.append(q)
             
-        # Now let's create a few shelves (their poses that is)
+        # # Now let's create a few shelves (their poses that is)
         self.shelves = list()
-        #self.shelves.append(Pose(Point(2.0, -3.0, 0.0), quaternions[0]))
-        # Position of shelf #3 : location: {x: 2.0, y: -3.0, ang: -1.5706}
-        #quat = tf_conv.transformations.quaternion_from_euler(0, 0, -1.5706, axes='sxyz')
-        quat = self.euler_to_quaternion(0, 0, -1.5706)
-        #quat = [0,0,0.7,-0.7]
-        self.shelves.append(Pose(Point(0.0, -2.5, 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
+        self.shelves.append(Pose(Point(2.0, 0.0, 0.0), self.euler_to_quaternion(0,0,-1.5706))) # Shelf 1
+        self.shelves.append(Pose(Point(2.0, -1.5, 0.0), self.euler_to_quaternion(0,0,-1.5706))) # Shelf 2
+        self.shelves.append(Pose(Point(2.0, -3.0, 0.0), self.euler_to_quaternion(0,0,-1.5706))) # Shelf 3
+        self.shelves.append(Pose(Point(1.0, -4.0, 0.0), self.euler_to_quaternion(0,0,3.1416))) # Shelf 4
+        self.shelves.append(Pose(Point(-0.5, -4.0, 0.0), self.euler_to_quaternion(0,0,3.1416))) # Shelf 5
+        self.shelves.append(Pose(Point(-2.0, -4.0, 0.0), self.euler_to_quaternion(0,0,3.1416))) # Shelf 6
+        self.shelves.append(Pose(Point(-3.0, -3.0, 0.0), self.euler_to_quaternion(0,0,1.5706))) # Shelf 7
+        self.shelves.append(Pose(Point(-2.0, -1.0, 0.0), self.euler_to_quaternion(0,0,0))) # Shelf 8
+
+        # #quat = tf_conv.transformations.quaternion_from_euler(0, 0, -1.5706, axes='sxyz')
+        # quat = self.euler_to_quaternion(0, 0, -1.5706)
+        # #quat = [0,0,0.7,-0.7]
+        # self.shelves.append(Pose(Point(0.0, -2.5, 0.0), Quaternion(quat[0], quat[1], quat[2], quat[3])))
         
         # Goal ID
         self.goal_id = 0
@@ -127,6 +164,10 @@ class BaseController:
             self.base_pub.publish("OK SPIN")
         elif cmd.data == "shelf3":
             self.move_to_pose(self.shelves[0])
+        elif cmd.data == "get_cost_of_travel":
+            # publish list of path costs to all shelves
+            self.get_cost_list.publish(self.calculate_cost_of_travel())
+            
     
     # When user wants the robot to rotate, then this will be called with the number of degrees passed.
     # Positive number: rotating clock wise, negative: rotating counter clock wise
@@ -229,7 +270,79 @@ class BaseController:
         # Stop the robot
         self.cmd_vel_pub.publish(Twist())
         rospy.sleep(1)
+
+    def robot_pose(self, msg):
+        rospy.loginfo("Finding robot pose")
+        data=""
+        #Subscribed coordinate information
+        x = msg.pose.pose.position.x
+        y = msg.pose.pose.position.y
+        #Subscribed quaternion information, used to indicate the direction
+        orien_z = msg.pose.pose.orientation.z
+        orien_w = msg.pose.pose.orientation.w
+        
+        self.latest_pose_stamped = PoseStamped(msg.header, msg.pose.pose)
+
+        data = "x:" + str(x) + ", y: " + str(y)+ ", z: " + str(orien_z)+ ", w: " + str(orien_w)
+        rospy.loginfo(data)
+
+    # This function will publish path cost from the current robot location to the specified target pose,
+    # when a target pose is sent to the /base_cntrl/path_cost_qry topic.
+    # The result will be published to a topic called /base_cntrl/path_cost
+    def publish_path_cost(self, targe_pose):
+        # Publish the calculated result
+        self.path_cost_pub.publish(self.calculate_path_cost(targe_pose))
+                
+    # This function will calculate path cost from the current robot location to the specified target pose.
+    def calculate_path_cost(self, target_pose):
     
+        cost = 0.0
+        
+        # We can only proceed if current_pose is known
+        if (not(self.latest_pose_stamped is None)):
+    
+            target_pose_stamped = PoseStamped()
+            
+            # First Header
+            target_pose_stamped.header.frame_id = self.latest_pose_stamped.header.frame_id
+            target_pose_stamped.header.seq = self.latest_pose_stamped.header.seq
+            target_pose_stamped.header.stamp = rospy.Time.now()
+            
+            # Now the actual pose
+            target_pose_stamped.pose = target_pose
+            
+            # Now let's get the most optimal plan that the current planner can give us
+            req = GetPlan()
+            req.start = self.latest_pose_stamped
+            req.goal = target_pose_stamped
+            req.tolerance = .5
+            
+            response = self.get_plan(req.start, req.goal, req.tolerance)
+            #print(response.plan)
+            
+            # Now that we have the plan, let's go through it and calculate the cost
+            prev_pose = None
+            for cur_pose in response.plan.poses:
+                if (not(prev_pose is None)):
+                    # Using Pythagorean theorem to calculate distance between two points
+                    cost += sqrt((cur_pose.pose.position.x - prev_pose.pose.position.x) ** 2 + (cur_pose.pose.position.y - prev_pose.pose.position.y) ** 2)
+                prev_pose = cur_pose
+                
+        return cost
+
+    # Calculates path costs to all pre-defined shelf positions and prepares a multiArray object ready to publish
+    # if so desired.
+    # The return will be a  Float32MultiArray object of the actual path costs in the same order as the shelves.
+    def calculate_cost_of_travel(self):
+        cost_list = list()
+
+        for shelf_pose in self.shelves:
+            cost_list.append(self.calculate_path_cost(shelf_pose))
+        
+        self.multiArray.data = cost_list
+        # return list of cost to travel to each shelf
+        return self.multiArray
+
 if __name__ == '__main__':
     try:
         BaseController()

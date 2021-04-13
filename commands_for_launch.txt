@@ -1,0 +1,129 @@
+Launch full simulation:
+roslaunch farscope_project_entry full_simulation.launch
+
+Launch hector mapping:
+rosrun hector_mapping hector_mapping scan:=/lidar_1/scan_filtered _base_frame:=base_link _odom_frame:=odom _map_frame:=hm_map map:=hm_map _map_resolution:=0.025
+
+Launch rviz:
+rviz
+
+Peep at cmd_vel:
+rostopic echo cmd_vel
+
+Send commands to robot:
+rostopic pub /base_cntrl/in_cmd std_msgs/String "fwd"
+rostopic pub /base_cntrl/in_cmd std_msgs/String "back"
+rostopic pub /base_cntrl/in_cmd std_msgs/String "left"
+rostopic pub /base_cntrl/in_cmd std_msgs/String "right"
+rostopic pub /base_cntrl/in_cmd std_msgs/String "spin"
+
+rostopic pub /base_cntrl/rotate_deg std_msgs/Int16 15
+rostopic pub /base_cntrl/rotate_deg std_msgs/Int16 '{data: -15}'
+rostopic pub -1 /base_cntrl/go_to_pose geometry_msgs/Pose '{position: {x: -1.0, y: -2.0, z: 0.0}, orientation: {w: 1.0}}'
+rostopic pub /base_cntrl/go_fwd std_msgs/Float32 0.1
+
+Install all deps:
+rosdep install --from-paths src --ignore-src -r -y
+
+Localise with AMCL:
+roslaunch test_localisation amcl.launch
+
+Start map server:
+rosrun map_server map_server frame_id:=hm_map sim_map.yaml
+
+Harvest a map with map_server:
+rosrun map_server map_saver map:=/hm_map -f sim_map
+
+
+Deps:
+sudo apt install ros-noetic-dwa-local-planner
+sudo apt install ros-noetic-tf2-sensor-msgs
+sudo apt install ros-noetic-move-base
+sudo apt install ros-noetic-turtlebot3-navigation
+sudo apt install ros-noetic-turtlebot3
+
+
+
+position: 
+  x: 0.0
+  y: -2.5
+  z: 0.0
+orientation: 
+  x: 0.0
+  y: 0.0
+  z: -0.7070373657757999
+  w: 0.707176189783577
+  
+Interface description:
+We have the following topics that base controller subscribes to:
+/base_cntrl/go_back
+/base_cntrl/go_fwd
+/base_cntrl/go_left
+/base_cntrl/go_right
+/base_cntrl/go_to_pose
+/base_cntrl/in_cmd
+/base_cntrl/rotate_deg
+
+And the following topic that base controller publishes:
+/base_cntrl/out_result
+
+The go_back, go_fwd, go_left and go_right topics can be used to move the robot by an arbitrary distance in the corresponding directions. E.g. to move 10cm to the right, one could publish this from the command line:
+
+rostopic pub /base_cntrl/go_right std_msgs/Float32 0.1
+
+The go_to_pose topic allows to set an arbitrary goal, which the base will plan a path and navigate to. To use it, one could publish this from the command line:
+
+rostopic pub -1 /base_cntrl/go_to_pose geometry_msgs/Pose '{position: {x: -1.0, y: -2.0, z: 0.0}, orientation: {w: 1.0}}'
+
+And that would take the robot to somewhere in the middle of the map.
+
+To get a cost of a path to a given pose:
+rostopic pub -1 /base_cntrl/path_cost_qry geometry_msgs/Pose '{position: {x: -1.0, y: -2.0, z: 0.0}, orientation: {w: 1.0}}'
+
+And the result will be published in: /base_cntrl/path_cost
+
+Example returns:
+rostopic echo /base_cntrl/path_cost
+WARNING: no messages received and simulated time is active.
+Is /clock being published?
+data: 2.239917755126953
+---
+data: 2.044374942779541
+---
+data: 1.0816153287887573
+---
+
+
+The rotate_deg topic allows to perform a clock-wise or counter-clock-wise rotation of the base by an arbitrary number of degrees. To rotate 25 degrees clock wise, one could publish this from the command line:
+
+rostopic pub /base_cntrl/rotate_deg std_msgs/Int16 '{data: 25}'
+ 
+Or for counter-clock-wise rotation:
+rostopic pub /base_cntrl/rotate_deg std_msgs/Int16 '{data: -25}'
+ 
+The in_cmd topic is mostly used for testing and accepts the following String parameters: "fwd", "back", "right", "left", "spin" and "shelf3". The "fwd", "back", "right", "left" commands will move the base by 1m accordingly, so e.g.:
+
+rostopic pub /base_cntrl/in_cmd std_msgs/String "fwd"
+
+will move the base forward by 1m.
+
+The "spin" command will make the robot spin 360 degrees. And the "shelf3" command will navigate the robot to a vicinity of shelf #3 although the proximity to the shelf will be rather loose. 
+
+And finally the out_result topic can be used to get a feedback about the completion of the required action. So if one subscribes to it:
+
+rostopic echo /base_cntrl/out_result
+
+then it will be returning status strings, e.g.:
+data: "OK LEFT"
+---
+data: "OK BACK"
+---
+data: "OK ROTATE"
+---
+
+
+To get a list of path costs to all shelves:
+rostopic pub /base_cntrl/in_cmd std_msgs/String "get_cost_of_tr
+
+And result will be in:
+rostopic echo /base_cntrl/cost_list
