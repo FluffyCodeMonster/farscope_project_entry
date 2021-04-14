@@ -27,6 +27,7 @@
      <material>Gazebo/Orange</material>
    </gazebo>
 
+  <!-- Pads -->
    <link name="pad${suffix}">
     <visual>
       <geometry>
@@ -57,7 +58,9 @@
     <child link="pad${suffix}"/>
     <origin xyz="0.013 0 0.06" rpy="0 0 0"/> <!-- Changed from rpy = '0 0.1 0' to prevent drooping of pad at the end of the gripper-->
    </joint>
-   
+
+
+
 
    <!-- make the pad squishy -->
    <gazebo reference="pad${suffix}">
@@ -95,9 +98,49 @@
       <material>Gazebo/Orange</material>
     </gazebo>
 
+       <!-- Contact sensor -->
+    <link name="contact_sensor_link">
+        <collision name="box_collision">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size = "0.02 0.04 0.26"/>
+            </geometry>
+        </collision>
+
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size = "0.02 0.04 0.26"/>
+            </geometry>
+        </visual>
+
+        <sensor name='my_contact' type='contact'>
+            <contact>
+                <collision>box_collision</collision>
+            </contact>
+
+            <always_on>1</always_on>
+            <update_rate>5</update_rate>
+            <!-- <visualize>true</visualize> !-->
+        </sensor>
+    </link>
+    <gazebo reference="contact_sensor_link">
+        <material>Gazebo/Red</material>
+    </gazebo>
+
     <!-- make two fingers -->
     <xacro:finger suffix="1" />
     <xacro:finger suffix="2" />
+
+
+    <!-- Join sensor to pad-->
+    <joint name="sensor1_to_pad1" type="fixed">
+      <parent link="pad1" />
+      <child link = "contact_sensor_link" />
+      <origin xyz="0.01 0 0.005" rpy="0 0 0"/>
+    </joint>
+
+
 
     <!-- fingers can slide -->
 

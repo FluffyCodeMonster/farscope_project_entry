@@ -60,6 +60,8 @@ class Manipulator:
 
     # Function runs a apickup routine @ a certain shelf height
     def pickup_routine(self):
+        # Unfold wrist
+        self.arm_mover.move(wrist_2_cmd = 3.14)
 
         # Publish status as we go "/arm_status"
         self.arm_log("STARTING GRIP")
@@ -102,17 +104,18 @@ class Manipulator:
 
 
     # Function moves arm into a position for transit
-    # Hardcoded to point straight upwards currently
-    # NEEDS WORK
+    # Camera currently facing forwards
     def fold_arm(self):
         self.arm_log("FOLDING ARM")
-        #self.arm_mover.move(shoulder_lift_cmd_in = 0, elbow_cmd_in=1.0)
+        self.arm_mover.move(shoulder_lift_cmd_in = -2.40, elbow_cmd_in = 2.4, wrist_2_cmd = 3.14)
         self.arm_log("ARM FOLDED")
 
     
     # Function for the deposit routine
     # Currently a dummy routine
     def deposit(self):
+
+        self.gripper_controller.open()
         self.arm_log("ITEM DEPOSITED")
         self.fold_arm()
 

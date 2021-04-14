@@ -121,3 +121,9 @@ data: "OK BACK"
 data: "OK ROTATE"
 ---
 
+
+To get a list of path costs to all shelves:
+rostopic pub /base_cntrl/in_cmd std_msgs/String "get_cost_of_tr
+
+And result will be in:
+rostopic echo /base_cntrl/cost_list
