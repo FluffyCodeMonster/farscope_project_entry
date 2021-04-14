@@ -137,7 +137,7 @@
     <joint name="sensor1_to_pad1" type="fixed">
       <parent link="pad1" />
       <child link = "contact_sensor_link" />
-      <origin xyz="0.013 0 0.06" rpy="0 0 0"/>
+      <origin xyz="0.01 0 0.005" rpy="0 0 0"/>
     </joint>
 
 
