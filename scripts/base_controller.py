@@ -128,9 +128,10 @@ class BaseController:
             
         # # Now let's create a few shelves (their poses that is)
         self.shelves = list()
+        offset = 1.7
         self.shelves.append(Pose(Point(2.0, 0.0, 0.0), self.euler_to_quaternion(0,0,-1.5706))) # Shelf 1
         self.shelves.append(Pose(Point(2.0, -1.5, 0.0), self.euler_to_quaternion(0,0,-1.5706))) # Shelf 2
-        self.shelves.append(Pose(Point(2.0, -3.0, 0.0), self.euler_to_quaternion(0,0,-1.5706))) # Shelf 3
+        self.shelves.append(Pose(Point(2.0 - offset, -3.0, 0.0), self.euler_to_quaternion(0,0,-1.8846))) # Shelf 3
         self.shelves.append(Pose(Point(1.0, -4.0, 0.0), self.euler_to_quaternion(0,0,3.1416))) # Shelf 4
         self.shelves.append(Pose(Point(-0.5, -4.0, 0.0), self.euler_to_quaternion(0,0,3.1416))) # Shelf 5
         self.shelves.append(Pose(Point(-2.0, -4.0, 0.0), self.euler_to_quaternion(0,0,3.1416))) # Shelf 6
@@ -163,7 +164,7 @@ class BaseController:
             self.base_driver.move(0, 0, 0.1, 105)
             self.base_pub.publish("OK SPIN")
         elif cmd.data == "shelf3":
-            self.move_to_pose(self.shelves[0])
+            self.move_to_pose(self.shelves[2])
         elif cmd.data == "get_cost_of_travel":
             # publish list of path costs to all shelves
             self.get_cost_list.publish(self.calculate_cost_of_travel())
@@ -245,8 +246,8 @@ class BaseController:
         # Send the goal pose to the MoveBaseAction server
         self.move_base.send_goal(goal)
         
-        # Allow 1 minute to get there
-        finished_within_time = self.move_base.wait_for_result(rospy.Duration(45)) 
+        # Allow 30 seconds to get there
+        finished_within_time = self.move_base.wait_for_result(rospy.Duration(30)) 
         
         # If we don't get there in time, abort the goal
         if not finished_within_time:
