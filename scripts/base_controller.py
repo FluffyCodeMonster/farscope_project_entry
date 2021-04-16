@@ -18,7 +18,7 @@ from math import radians, pi, sqrt
 import numpy as np
 
 # the robt base will position itself 1m from each shelf
-off_set = 1.0
+off_set = -1.0
 
 # Lable              x                   y               angle
 shelf_pose =   [[2.0 + off_set,     0.0,                -1.5706 ],
