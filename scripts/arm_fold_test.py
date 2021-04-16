@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from farscope_group_project.farscope_robot_utils import ArmMover
+from farscope_project_entry.farscope_robot_utils import ArmMover
 from std_msgs.msg import String
 
 class arm_fold():
