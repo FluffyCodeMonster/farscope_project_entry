@@ -22,15 +22,16 @@ import numpy as np
 # the robt base will position itself 1m from each shelf
 off_set = 1.0
 
-# Lable              x                   y               angle
-shelf_pose =   [[2.0 - off_set,     0.0,                -1.5706 ],
-                [2.0 - off_set,     -1.5,               -1.5706 ],
-                [2.0 - off_set,     -3.0,               -1.5706 ],
-                [1.0,               -4.0 + off_set,     3.1416  ],
-                [-0.5,              -4.0 + off_set,     3.1416  ],
-                [-2.0,              -4.0 + off_set,     3.1416  ],
-                [-3.0 + off_set,    -3.0,               1.5706  ],
-                [-2.0,              -1.0 + off_set,     0.0     ]]
+# Angles need to be added PI because they're the angles of where shelves are facing, but our robot needs to face the opposite way- towards the faces of the shelves.
+# Labels              x                   y               angle
+shelf_pose =   [[2.0 - off_set,     0.0,                -pi/2 + pi],
+                [2.0 - off_set,     -1.5,               -pi/2 + pi],
+                [2.0 - off_set,     -3.0,               -pi/2 + pi],
+                [1.0,               -4.0 + off_set,      pi   + pi],
+                [-0.5,              -4.0 + off_set,      pi   + pi],
+                [-2.0,              -4.0 + off_set,      pi   + pi],
+                [-3.0 + off_set,    -3.0,                pi/2 + pi],
+                [-2.0,              -1.0 - off_set,      0.0  + pi]]
 
 class BaseController:
     # Number of seconds required to rotate 1 degree at speed of 0.1 when using base_driver.move.
@@ -121,12 +122,46 @@ class BaseController:
             rate.sleep()
         rospy.loginfo("Spawning completion detected - time to get going!")
 
+    # Conversion of Euler angle to a quaternion
     def euler_to_quaternion(self, roll, pitch, yaw):
         qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
         qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
         qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
         qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
         return Quaternion(qx, qy, qz, qw)
+
+    # Multiplication of quaternions
+    def multQ(self, Q1, Q2):
+        x1 = Q1.x
+        y1 = Q1.y
+        z1 = Q1.z
+        w1 = Q1.w
+        
+        x2 = Q2.x
+        y2 = Q2.y
+        z2 = Q2.z
+        w2 = Q2.w
+        
+        # Some quaternion multiplication maths as per Wikipedia.
+        # a = w
+        # b = x
+        # c = y
+        # d = z
+        return Quaternion(
+            w1*x2 + x1*w2 + y1*z2 - z1*y2,
+            w1*y2 - x1*z2 + y1*w2 + z1*x2,
+            w1*z2 + x1*y2 - y1*x2 + z1*w2,
+            w1*w2 - x1*x2 - y1*y2 - z1*z2
+        )
+
+    # Rotates a given Quaternion around Z axis by the given amount of radians- a.k.a multiplies the source quaternion with the rotation quaternion.
+    def rotateQuaternionAroundZ(self, quat, rot):
+        #quat_star = Quaternion(-quat.x, -quat.y, -quat.z, quat.w)
+        quat_rot = self.euler_to_quaternion(0, 0, rot)
+        
+        #result = self.multQ(self.multQ(quat_rot, quat), quat_star)
+        result = self.multQ(quat, quat_rot)
+        return result
 
     # This will prepare goals and the end angles (think shelf #1, #2, etc)
     def prepare_goals(self):
@@ -239,6 +274,11 @@ class BaseController:
     
     # Creates an MoveBaseGoal object from a Pose and moves to it
     def move_to_pose(self, pose):
+    
+        # Because the point on the robot, which we're trying to get to the target pose, is offset by an angle,
+        # we need to rotate the given pose by around pi/2 counter clock wise.
+        pose = Pose(pose.position, self.rotateQuaternionAroundZ(pose.orientation, -pi/2))
+        
         # Intialize the goal
         goal = MoveBaseGoal()
         
