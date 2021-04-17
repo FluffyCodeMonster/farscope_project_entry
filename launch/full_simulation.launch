@@ -21,7 +21,7 @@
   <!-- edit *below* here to add your nodes and parameters for robot control -->
 
   <!-- run example controller -->
-  <node name="robot_controller" pkg="farscope_project_entry" type="our_controller.py" />
+  <!--node name="robot_controller" pkg="farscope_project_entry" type="our_controller.py" /-->
   
   <!-- Base controller -->
   <node name="robot_base_controller" pkg="farscope_project_entry" type="base_controller.py" output="screen"/>

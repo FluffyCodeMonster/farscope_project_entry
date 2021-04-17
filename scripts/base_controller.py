@@ -9,6 +9,7 @@ from actionlib_msgs.msg import *
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist, PoseWithCovarianceStamped
 from nav_msgs.msg import Path
 from nav_msgs.srv import GetPlan, GetPlanRequest
+from std_srvs.srv import Empty
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseActionGoal
 #from tf.transformations import quaternion_from_euler
 #from tf_conversions.transformations import quaternion_from_euler
@@ -19,12 +20,12 @@ from math import radians, pi, sqrt
 import numpy as np
 
 # the robt base will position itself 1m from each shelf
-off_set = -1.0
+off_set = 1.0
 
 # Lable              x                   y               angle
-shelf_pose =   [[2.0 + off_set,     0.0,                -1.5706 ],
-                [2.0 + off_set,     -1.5,               -1.5706 ],
-                [2.0 + off_set,     -3.0,               -1.5706 ],
+shelf_pose =   [[2.0 - off_set,     0.0,                -1.5706 ],
+                [2.0 - off_set,     -1.5,               -1.5706 ],
+                [2.0 - off_set,     -3.0,               -1.5706 ],
                 [1.0,               -4.0 + off_set,     3.1416  ],
                 [-0.5,              -4.0 + off_set,     3.1416  ],
                 [-2.0,              -4.0 + off_set,     3.1416  ],
@@ -69,6 +70,12 @@ class BaseController:
         
         # Getting the service for path planning
         self.get_plan = rospy.ServiceProxy('/move_base/make_plan', GetPlan)
+        
+        # Service for clearing unknown space since we're not going to have dynamic obstacles
+        #self.space_clear = rospy.ServiceProxy('/move_base/clear_unknown_space', Empty)
+        
+        # Service for clearing costmaps
+        self.costmap_clear = rospy.ServiceProxy('/move_base/clear_costmaps', Empty)
         
         # We will publish a Float32 value as a response to the path cost query
         self.path_cost_pub = rospy.Publisher("/base_cntrl/path_cost", Float32, queue_size=3)
@@ -162,8 +169,22 @@ class BaseController:
         elif cmd.data == "spin":
             self.base_driver.move(0, 0, 0.1, 105)
             self.base_pub.publish("OK SPIN")
+        elif cmd.data == "shelf1":
+            self.move_to_pose(self.shelves[0])
+        elif cmd.data == "shelf2":
+            self.move_to_pose(self.shelves[1])
         elif cmd.data == "shelf3":
             self.move_to_pose(self.shelves[2])
+        elif cmd.data == "shelf4":
+            self.move_to_pose(self.shelves[3])
+        elif cmd.data == "shelf5":
+            self.move_to_pose(self.shelves[4])
+        elif cmd.data == "shelf6":
+            self.move_to_pose(self.shelves[5])
+        elif cmd.data == "shelf7":
+            self.move_to_pose(self.shelves[6])
+        elif cmd.data == "shelf8":
+            self.move_to_pose(self.shelves[7])    
         elif cmd.data == "get_cost_of_travel":
             # publish list of path costs to all shelves
             self.get_cost_list.publish(self.calculate_cost_of_travel())
@@ -241,11 +262,16 @@ class BaseController:
     
     # Moves the base to the passed goal, which includes a Pose
     def move(self, goal):
+
+        # First clear maps if we have any artefacts from previous motions
+        resp = self.costmap_clear()
+        #self.space_clear(Empty())
+        
         # Send the goal pose to the MoveBaseAction server
         self.move_base.send_goal(goal)
         
-        # Allow 30 seconds to get there
-        finished_within_time = self.move_base.wait_for_result(rospy.Duration(30)) 
+        # Allow 45 seconds to get there
+        finished_within_time = self.move_base.wait_for_result(rospy.Duration(45)) 
         
         # If we don't get there in time, abort the goal
         if not finished_within_time:
