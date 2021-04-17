@@ -33,10 +33,8 @@
 
   <node name="move_gripper" pkg="farscope_project_entry" type="Move_Gripper.py"/>
   
-  <!-- Redundant map source experiment -->
-  <!--node name="map_source" pkg="farscope_project_entry" type="map_source.py" clear_params="true">
-    <param name="trimmed_hector_map" value="$(find farscope_project_entry)/data/1map_grid_data_only" />
-  </node-->
+  <!-- Arm commands -->
+  <node name="arm_commands" pkg="farscope_project_entry" type="arm_fold_test.py" output="screen"/>
   
   <!-- Map server provided map source -->
   <arg name="map_file" default="$(find farscope_project_entry)/maps/sim_map.yaml"/>

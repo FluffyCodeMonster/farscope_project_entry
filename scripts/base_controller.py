@@ -89,7 +89,16 @@ class BaseController:
         self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
 
         # We'll be keeping the current robot pose in this variable. We'll populate it with AMCL subscription callback.
-        self.latest_pose_stamped = None
+        # but for now it will be at the initial point.
+        self.latest_pose_stamped = PoseStamped()
+        
+        # First Header
+        self.latest_pose_stamped.header.frame_id = ""
+        self.latest_pose_stamped.header.seq = 0
+        self.latest_pose_stamped.header.stamp = rospy.Time.now()
+        
+        # Now the actual pose
+        self.latest_pose_stamped.pose = Pose(Point(0.0, 0.0, 0.0), Quaternion(0.0, 0.0, 0.0, 1.0))
 
         # Clean up on shutdown        
         rospy.on_shutdown(self.shutdown)

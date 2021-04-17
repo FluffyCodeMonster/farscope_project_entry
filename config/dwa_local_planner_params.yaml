@@ -8,9 +8,9 @@ DWAPlannerROS:
   min_vel_y: -0.22 #0.0
 
   # reduced max rotation velocity from default 1 rad/sec
-  max_rot_vel: 0.5
+  #max_rot_vel: 0.5
   # reduced min rotation velocity from default 0.4 rad/sec
-  min_rot_vel: 0.3
+  #min_rot_vel: 0.3
 
 # The velocity when robot is moving in a straight line
   max_vel_trans:  0.22
