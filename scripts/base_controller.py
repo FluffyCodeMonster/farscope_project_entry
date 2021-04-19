@@ -31,7 +31,8 @@ shelf_pose =   [[2.0 - off_set,     0.0,                -pi/2 + pi],
                 [-0.5,              -4.0 + off_set,      pi   + pi],
                 [-2.0,              -4.0 + off_set,      pi   + pi],
                 [-3.0 + off_set,    -3.0,                pi/2 + pi],
-                [-2.0,              -1.0 - off_set,      0.0  + pi]]
+                [-2.0,              -1.0 - off_set,      0.0  + pi],
+                [1.0,               1.5 - off_set,       0.0  + pi]]
 
 class BaseController:
     # Number of seconds required to rotate 1 degree at speed of 0.1 when using base_driver.move.
@@ -231,7 +232,9 @@ class BaseController:
         elif cmd.data == "shelf7":
             self.move_to_pose(self.shelves[6])
         elif cmd.data == "shelf8":
-            self.move_to_pose(self.shelves[7])    
+            self.move_to_pose(self.shelves[7])
+        elif cmd.data == "bin":
+            self.move_to_pose(self.shelves[8])
         elif cmd.data == "get_cost_of_travel":
             # publish list of path costs to all shelves
             self.get_cost_list.publish(self.calculate_cost_of_travel())
