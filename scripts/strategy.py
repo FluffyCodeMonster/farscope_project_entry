@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Apr 16 10:19:46 2021
+
+@author: ep15603
+"""
+
 #!/usr/bin/env python
 
 from std_msgs.msg import String, Float32, Int16
@@ -73,6 +80,14 @@ class Strategy:
 
         # TODO: wait until everything is loaded (as implemented in base_controller.py)
 
+
+        rospy.loginfo("Waiting for loading procedure to finish")
+        rate = rospy.Rate(2.0)
+        while not rospy.get_param('target_spawning_complete',False):
+            rate.sleep()
+        rospy.loginfo("Loading completed")
+        
+        
         self.trophy_goal = self.score_one()
         self.move_base_to_goal()
 
@@ -115,8 +130,13 @@ class Strategy:
         # Relict, not expected to be implemented
         pass
 
-    def calculate_difficulty(self, trophy):
+    def calculate_difficulty(self, trophy, w, shelf_width):
         # TODO: Implement function calculating the difficulty
+        # TODO: Change name of variables for width, dimensions needed from perception
+        # self.w = w # position of trophy in shelf (side to side)
+        
+        difficulty =  (w/(shelf_width/2))^2 
+        
         pass
 
     def move_base(self, x, y, alpha):
