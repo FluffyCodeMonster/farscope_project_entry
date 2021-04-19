@@ -4,6 +4,8 @@ from std_msgs.msg import String, Float32, Int16
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
 import rospy
 import json
+import yaml
+import sys
 import numpy as np
 
 
@@ -16,8 +18,8 @@ def euler_to_quaternion(roll, pitch, yaw):
 
 
 class Trophy:
-    def __init__(self, tid, x, y, z, shelf, level, w):
-        self.id = tid
+    def __init__(self, trophy_id, x, y, z, shelf, level, w):
+        self.trophy_id = trophy_id
         self.x = x
         self.y = y
         self.z = z
@@ -27,18 +29,30 @@ class Trophy:
 
 
 class Strategy:
-    def __init__(self):
+    def __init__(self, scenario_file_path):
 
         rospy.init_node("strategy")
 
-        # TODO: Create file including the missing data
-        # TODO: Load files here
+        # TODO: Update data.json with proper values
 
-        self.base_x = 0
-        self.base_y = 0
-        self.base_alpha = 0
+        with open(scenario_file_path) as scenario_file:
+            scenario = yaml.load(scenario_file)
 
-        self.shelf_positions = None
+        with open("data.json") as data_file:
+            data = json.load(data_file)
+
+        self.base_x = data["base"]["x"]
+        self.base_y = data["base"]["y"]
+        self.base_alpha = data["base"]["alpha"]
+
+        self.shelf_positions = data["shelf_positions"]
+        self.trophy_positions = data["trophy_positions"]
+        self.trophy_heights = data["trophy_heights"]
+
+        self.shelf_width = data["env"]["shelf_width"]
+        self.max_deploy = data["env"]["max_deploy"]
+        self.max_neighborhood_score = data["env"]["max_neighborhood_score"]
+        self.arm_height_drop = data["env"]["arm_height_drop"]
 
         # Current Mode of Robot
         # 0 = Idle
@@ -48,36 +62,64 @@ class Strategy:
         self.mode = 0
 
         # Current Phase of Strategy
+        # -1 = Loading
         # 0 = Get Trophy
         # 1 = Return Trophy
         # 2 = Finished
-        self.phase = 0
-
-        # Current Target Trophy
-        self.trophy_goal = None
+        self.phase = -1
 
         # List of all Trophies, Constantly Updated
-        self.trophy_list = None
+        self.trophy_list = []
+        for s in scenario["scenario"]:
+            shelf_id = s["id"]
+            for trophy in s["trophies"]:
+                t = Trophy(
+                    trophy_id="{}{}0".format(s, trophy),
+                    x=self.shelf_positions[str(shelf_id)]["x"],
+                    y=self.shelf_positions[str(shelf_id)]["y"],
+                    z=self.trophy_heights[str(trophy)],
+                    shelf=s,
+                    level=trophy,
+                    w=0
+                )
+                self.trophy_list.append(t)
         self.trophy_map = None
-        self.neighbor_score_mask = None
+        self.neighbor_score_mask = data["neighbor_score_mask"]
         self.update_trophy_map()
 
+        # Send request to drive to position
         self.pub_base = rospy.Publisher('/base_cntrl/go_to_pose', Pose, queue_size=3)
+        # Send request for arm to move to certain height
         self.pub_arm = rospy.Publisher('/arm_cmd', Int16, queue_size=3)
+        # Send request to grip or drop trophy
         self.pub_gripper = rospy.Publisher('/gripper_cmd', String, queue_size=3)
 
+        # Receive information that base is in position
         self.sub_base = rospy.Subscriber("/base_cntrl/out_result", String, self.base_in_position)
+        # Receive information that arm is in position
         self.sub_arm = rospy.Subscriber("/arm_result", String, self.arm_in_position)
+        # Receive information that gripper completed task
         self.sub_gripper = rospy.Subscriber("/gripper_result", String, self.gripper_in_position)
+        # Receive updates about the trophies from perception
         self.sub_trophy = rospy.Subscriber("/trophy_update", String, self.trophy_update)
 
-        # TODO: wait until everything is loaded (as implemented in base_controller.py)
+        rospy.loginfo("Waiting for loading procedure to finish")
+        rate = rospy.Rate(2.0)
+        while not rospy.get_param('target_spawning_complete', False):
+            rate.sleep()
+        rospy.loginfo("Loading completed")
 
+        # Current Target Trophy
         self.trophy_goal = self.score_one()
+
+        # Start first run
         self.move_base_to_goal()
 
+        # Get trophy phase has started
+        self.phase = 1
+
     def update_trophy_map(self):
-        self.trophy_map = np.zeros((3, 8))
+        self.trophy_map = np.zeros((4, 8))
         for trophy in self.trophy_list:
             self.trophy_map[trophy.level, trophy.shelf] = self.trophy_map[trophy.level, trophy.shelf] + 1
 
@@ -87,7 +129,8 @@ class Strategy:
             deploy_time = self.calculate_deploy_time(trophy)
             n_density = self.calculate_n_density(trophy)
             # info_gain = self.calculate_info_gain
-            score = 1.0 * deploy_time + 0 * n_density
+            score = 1.0 * (1 - (deploy_time / self.max_deploy)) \
+                + 0 * (n_density / self.max_neighborhood_score)
             if score > max_val[0]:
                 max_val = (score, trophy)
         return max_val[1]
@@ -98,7 +141,8 @@ class Strategy:
             deploy_time = self.calculate_deploy_time(trophy)
             n_density = self.calculate_n_density(trophy)
             difficulty = self.calculate_difficulty(trophy)
-            score = 1.0 * deploy_time + 0 * n_density
+            score = (1.0 * (1 - (deploy_time / self.max_deploy))
+                     + 0 * (n_density / self.max_neighborhood_score)) * (1 - difficulty)
             if score > max_val[0]:
                 max_val = (score, trophy)
         return max_val[1]
@@ -108,16 +152,28 @@ class Strategy:
         pass
 
     def calculate_n_density(self, trophy):
-        # TODO: Calculate density based on the trophy_map and neighbor_score_mask
-        pass
+        if trophy.shelf == 1:
+            map_values = self.trophy_map[:, :2]
+            mask_result = np.multiply(map_values, np.array(self.neighbor_score_mask[str(trophy.level)])[:, 1:])
+            density = np.sum(mask_result)
+            pass
+        elif trophy.shelf == 8:
+            map_values = self.trophy_map[:, 6:]
+            mask_result = np.multiply(map_values, np.array(self.neighbor_score_mask[str(trophy.level)])[:, :2])
+            density = np.sum(mask_result)
+        else:
+            map_values = self.trophy_map[:, (trophy.shelf - 2): (trophy.shelf + 1)]
+            mask_result = np.multiply(map_values, np.array(self.neighbor_score_mask[str(trophy.level)]))
+            density = np.sum(mask_result)
+        return density
 
     def calculate_info_gain(self, trophy):
         # Relict, not expected to be implemented
         pass
 
     def calculate_difficulty(self, trophy):
-        # TODO: Implement function calculating the difficulty
-        pass
+        difficulty = (trophy.w / (self.shelf_width / 2)) ^ 8
+        return difficulty
 
     def move_base(self, x, y, alpha):
         quaternion = euler_to_quaternion(0, 0, alpha)
@@ -126,46 +182,67 @@ class Strategy:
         self.pub_base.publish(pose)
 
     def move_base_to_goal(self):
-        x, y, alpha = self.shelf_positions[self.trophy_goal.shelf]
+        x = self.shelf_positions[str(self.trophy_goal.shelf)]["x"]
+        y = self.shelf_positions[str(self.trophy_goal.shelf)]["y"]
+        alpha = self.shelf_positions[str(self.trophy_goal.shelf)]["alpha"]
         self.move_base(x, y, alpha)
 
     def return_base(self):
         self.move_base(self.base_x, self.base_y, self.base_alpha)
-
-    def base_in_position(self, msg):
-        self.pub_arm.publish(self.trophy_goal.z)
 
     def trophy_update(self, msg):
         # TODO: Create list of Trophy objects from input and compare it with current list
         # TODO: If the goal trophy is at a significantly different place than currently thought: update
         # TODO: If the goal trophy does not exist: abort
         trophy_list = json.loads(msg.data)
-        try:
-            info_update = trophy_list[self.goal]
-        except KeyError:
-            # Abort
+        if self.phase == -1:
+            pass
+        elif self.phase == 0:
+            # Compare with old trophy list
+            # If the current goal trophy is no longer on the list: choose new trophy
+            # If the coordinates of the trophy have been updated beyond a certain degree: send new goal to arm/base
+            pass
+        elif self.phase == 1:
+            # Simply update the trophy list
             pass
 
+    def base_in_position(self, msg):
+        if self.phase == -1:
+            pass
+        elif self.phase == 0:
+            self.pub_arm.publish(self.trophy_goal.z)
+        elif self.phase == 1:
+            self.pub_arm.publish(self.arm_height_drop)
+
     def arm_in_position(self, msg):
-        if self.phase == 0:
+        if self.phase == -1:
+            pass
+        elif self.phase == 0:
             self.pub_gripper.publish("grip")
-        else:
+        elif self.phase == 1:
             self.pub_gripper.publish("drop")
 
     def gripper_in_position(self, msg):
         result = msg.data
-        if self.phase == 0:
+        if self.phase == -1:
+            pass
+        elif self.phase == 0:
             if result == "success":
-                self.phase = 1
                 self.return_base()
+                self.phase = 1
             else:
                 self.score_two()
                 self.move_base_to_goal()
+        elif self.phase == 1:
+            self.score_two()
+            self.move_base_to_goal()
+            self.phase = 0
 
 
 if __name__ == '__main__':
+    scenario_file_arg = sys.argv[0]
     try:
-        Strategy()
+        Strategy(scenario_file_arg)
         while not rospy.is_shutdown():
             rospy.spin()
     except rospy.ROSInterruptException:
