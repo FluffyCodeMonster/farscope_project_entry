@@ -67,7 +67,7 @@ class Manipulator:
         self.arm_log("STARTING GRIP")
 
         # Move arm to intended height
-        self.arm_mover.move(shoulder_lift_cmd_in = self.shoulder_heights[self.shelf_sub], elbow_cmd_in=1.0)
+        self.arm_mover.move(shoulder_lift_cmd_in = self.shoulder_heights[self.shelf_sub], elbow_cmd_in=1.0, wrist_2_cmd = 3.14)
 
         self.arm_log("ARM @ SHELF")
         self.arm_log("MOVING INTO SHELF")
@@ -110,11 +110,16 @@ class Manipulator:
         self.arm_mover.move(shoulder_lift_cmd_in = -2.40, elbow_cmd_in = 2.4, wrist_2_cmd = 3.14)
         self.arm_log("ARM FOLDED")
 
-    
+    # Function to unfold the arm for deposit
+    def unfold_arm(self):
+        self.arm_log("UNFOLDING ARM")
+        self.arm_mover.move(shoulder_lift_cmd_in = 0, elbow_cmd_in = 0, wrist_2_cmd = 0)
+        self.arm_log("ARM UNFOLDED")
+
     # Function for the deposit routine
     # Currently a dummy routine
     def deposit(self):
-
+        self.unfold_arm()
         self.gripper_controller.open()
         self.arm_log("ITEM DEPOSITED")
         self.fold_arm()
