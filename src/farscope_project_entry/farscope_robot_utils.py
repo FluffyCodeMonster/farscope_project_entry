@@ -93,6 +93,13 @@ def where_is_this_trophy(trophy_coords):
 
     return (shelf_id, level_id, position_on_shelf, trophy_coords)
 
+def where_are_these_trophies(trophy_coord_list):
+    result = list()
+    for tc in trophy_coord_list:
+        result.append(where_is_this_trophy(tc))
+    
+    return result
+
 class GripperController:
     """Control the FARSCOPE simple gripper model"""
     def __init__(self):
