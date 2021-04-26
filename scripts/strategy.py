@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from std_msgs.msg import String, Float32, Int16
+from std_msgs.msg import String, Float32, Int16, Float32MultiArray
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
 import rospy
 import json
@@ -86,7 +86,10 @@ class Strategy:
         self.trophy_map = None
         self.neighbor_score_mask = data["neighbor_score_mask"]
         self.update_trophy_map()
+        self.trophy_goal = None
 
+        # Send request to publish the travel cost to different shelves
+        self.pub_travel = rospy.Publisher('/base_cntrl/in_cmd', String, queue_size=3)
         # Send request to drive to position
         self.pub_base = rospy.Publisher('/base_cntrl/go_to_pose', Pose, queue_size=3)
         # Send request for arm to move to certain height
@@ -94,6 +97,8 @@ class Strategy:
         # Send request to grip or drop trophy
         self.pub_gripper = rospy.Publisher('/gripper_cmd', String, queue_size=3)
 
+        # Receive list of travel costs to different shelves
+        self.sub_travel = rospy.Subscriber("/base_cntrl/cost_list", Float32MultiArray, self.score)
         # Receive information that base is in position
         self.sub_base = rospy.Subscriber("/base_cntrl/out_result", String, self.base_in_position)
         # Receive information that arm is in position
@@ -109,11 +114,8 @@ class Strategy:
             rate.sleep()
         rospy.loginfo("Loading completed")
 
-        # Current Target Trophy
-        self.trophy_goal = self.score_one()
-
-        # Start first run
-        self.move_base_to_goal()
+        # Start process of trophy search
+        self.travel_times()
 
         # Get trophy phase has started
         self.phase = 1
@@ -123,6 +125,7 @@ class Strategy:
         for trophy in self.trophy_list:
             self.trophy_map[trophy.level, trophy.shelf] = self.trophy_map[trophy.level, trophy.shelf] + 1
 
+    """
     def score_one(self):
         max_val = (0, None)
         for trophy in self.trophy_list:
@@ -146,6 +149,24 @@ class Strategy:
             if score > max_val[0]:
                 max_val = (score, trophy)
         return max_val[1]
+    """
+
+    def travel_times(self):
+        self.pub_travel.publish(String("get_cost_of_travel"))
+
+    def score(self, msg):
+        travel_times = msg.data
+        max_val = (0, None)
+        for trophy in self.trophy_list:
+            deploy_time = travel_times[trophy.shelf]
+            n_density = self.calculate_n_density(trophy)
+            difficulty = self.calculate_difficulty(trophy)
+            score = (1.0 * (1 - (deploy_time / self.max_deploy))
+                     + 0 * (n_density / self.max_neighborhood_score)) * (1 - difficulty)
+            if score > max_val[0]:
+                max_val = (score, trophy)
+        self.trophy_goal = max_val[1]
+        self.move_base_to_goal()
 
     def calculate_deploy_time(self, trophy):
         # TODO: Either load deploy time from file or request from path planning
@@ -231,11 +252,9 @@ class Strategy:
                 self.return_base()
                 self.phase = 1
             else:
-                self.score_two()
-                self.move_base_to_goal()
+                self.travel_times()
         elif self.phase == 1:
-            self.score_two()
-            self.move_base_to_goal()
+            self.travel_times()
             self.phase = 0
 
 
