@@ -100,7 +100,7 @@
 
        <!-- Contact sensor -->
     <link name="contact_sensor_link">
-        <collision name="box_collision">
+        <collision name="contact_sensor_collision">
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
                 <box size = "0.02 0.04 0.26"/>
@@ -114,18 +114,17 @@
             </geometry>
         </visual>
 
-        <sensor name='my_contact' type='contact'>
-            <contact>
-                <collision>box_collision</collision>
-            </contact>
-
-            <always_on>1</always_on>
-            <update_rate>5</update_rate>
-            <!-- <visualize>true</visualize> !-->
-        </sensor>
     </link>
     <gazebo reference="contact_sensor_link">
-        <material>Gazebo/Red</material>
+        <sensor name='my_contact' type='contact'>
+          <always_on>1</always_on>
+          <update_rate>0.5</update_rate>
+          <contact>
+              <collision>contact_sensor_collision_collision</collision>
+              <topic>/contact_sensor</topic>
+          </contact>
+      </sensor>
+      <material>Gazebo/Red</material>
     </gazebo>
 
     <!-- make two fingers -->
