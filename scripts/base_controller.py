@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys, rospy
-from std_msgs.msg import String, Int16, Float32
+from std_msgs.msg import String, Int16, Float32, Float32MultiArray, MultiArrayDimension
 #from farscope_group_project.farscope_robot_utils import BaseDriver
 from farscope_project_entry.farscope_robot_utils import BaseDriver
 
@@ -31,7 +31,8 @@ shelf_pose =   [[2.0 - off_set,     0.0,                -pi/2 + pi],
                 [-0.5,              -4.0 + off_set,      pi   + pi],
                 [-2.0,              -4.0 + off_set,      pi   + pi],
                 [-3.0 + off_set,    -3.0,                pi/2 + pi],
-                [-2.0,              -1.0 - off_set,      0.0  + pi]]
+                [-2.0,              -1.0 - off_set,      0.0  + pi],
+                [1.0,               1.5 - off_set,       0.0  + pi]]
 
 class BaseController:
     # Number of seconds required to rotate 1 degree at speed of 0.1 when using base_driver.move.
@@ -67,7 +68,7 @@ class BaseController:
         self.amcl_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.robot_pose)
 
         # We will subscribe to an Int16 command topic to move backwards by the passed amount of meters.
-        self.path_cost_qry_sub = rospy.Subscriber("/base_cntrl/path_cost_qry", Pose, self.calculate_path_cost)
+        self.path_cost_qry_sub = rospy.Subscriber("/base_cntrl/path_cost_qry", Pose, self.publish_path_cost)
         
         # Getting the service for path planning
         self.get_plan = rospy.ServiceProxy('/move_base/make_plan', GetPlan)
@@ -92,6 +93,9 @@ class BaseController:
 
         # We will publishing to cmd_vel directly when shutting down as a crude way to stop the robot in its tracks if it is moving.
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=3)
+
+        # Publish list of cost to travel to each shelf
+        self.get_cost_list = rospy.Publisher("/base_cntrl/cost_list", Float32MultiArray, queue_size=3)
 
         # Subscribe to the move_base action server. This lets us to directly interact with move_base- to ask for paths and set goals.
         self.move_base = actionlib.SimpleActionClient("move_base", MoveBaseAction)
@@ -121,6 +125,15 @@ class BaseController:
         while not rospy.get_param('target_spawning_complete',False):
             rate.sleep()
         rospy.loginfo("Spawning completion detected - time to get going!")
+        
+        # init ros standard array message
+        self.multiArray = Float32MultiArray()
+        self.multiArray.data = list()
+        allocate_array = MultiArrayDimension()
+        allocate_array.label = "costs"
+        allocate_array.size = 1
+        allocate_array.stride = 1
+        self.multiArray.layout.dim.append(allocate_array)
 
     # Conversion of Euler angle to a quaternion
     def euler_to_quaternion(self, roll, pitch, yaw):
@@ -219,7 +232,9 @@ class BaseController:
         elif cmd.data == "shelf7":
             self.move_to_pose(self.shelves[6])
         elif cmd.data == "shelf8":
-            self.move_to_pose(self.shelves[7])    
+            self.move_to_pose(self.shelves[7])
+        elif cmd.data == "bin":
+            self.move_to_pose(self.shelves[8])
         elif cmd.data == "get_cost_of_travel":
             # publish list of path costs to all shelves
             self.get_cost_list.publish(self.calculate_cost_of_travel())
@@ -351,9 +366,14 @@ class BaseController:
         data = "x:" + str(x) + ", y: " + str(y)+ ", z: " + str(orien_z)+ ", w: " + str(orien_w)
         rospy.loginfo(data)
 
-    # This function will calculate path cost from the current robot location to the specified target pose,
+    # This function will publish path cost from the current robot location to the specified target pose,
     # when a target pose is sent to the /base_cntrl/path_cost_qry topic.
     # The result will be published to a topic called /base_cntrl/path_cost
+    def publish_path_cost(self, targe_pose):
+        # Publish the calculated result
+        self.path_cost_pub.publish(self.calculate_path_cost(targe_pose))
+                
+    # This function will calculate path cost from the current robot location to the specified target pose.
     def calculate_path_cost(self, target_pose):
     
         cost = 0.0
@@ -376,8 +396,9 @@ class BaseController:
             req.start = self.latest_pose_stamped
             req.goal = target_pose_stamped
             req.tolerance = .5
+            
             response = self.get_plan(req.start, req.goal, req.tolerance)
-            print(response.plan)
+            #print(response.plan)
             
             # Now that we have the plan, let's go through it and calculate the cost
             prev_pose = None
@@ -386,9 +407,21 @@ class BaseController:
                     # Using Pythagorean theorem to calculate distance between two points
                     cost += sqrt((cur_pose.pose.position.x - prev_pose.pose.position.x) ** 2 + (cur_pose.pose.position.y - prev_pose.pose.position.y) ** 2)
                 prev_pose = cur_pose
+                
+        return cost
+
+    # Calculates path costs to all pre-defined shelf positions and prepares a multiArray object ready to publish
+    # if so desired.
+    # The return will be a  Float32MultiArray object of the actual path costs in the same order as the shelves.
+    def calculate_cost_of_travel(self):
+        cost_list = list()
+
+        for shelf_pose in self.shelves:
+            cost_list.append(self.calculate_path_cost(shelf_pose))
         
-        # Finally publish the result
-        self.path_cost_pub.publish(cost)
+        self.multiArray.data = cost_list
+        # return list of cost to travel to each shelf
+        return self.multiArray
 
 if __name__ == '__main__':
     try:
