@@ -166,7 +166,7 @@ class Strategy:
             if score > max_val[0]:
                 max_val = (score, trophy)
         self.trophy_goal = max_val[1]
-        self.move_base_to_goal()
+        self.move_base()
 
     def calculate_deploy_time(self, trophy):
         # TODO: Either load deploy time from file or request from path planning
@@ -196,6 +196,7 @@ class Strategy:
         difficulty = (trophy.w / (self.shelf_width / 2)) ^ 8
         return difficulty
 
+    """
     def move_base(self, x, y, alpha):
         quaternion = euler_to_quaternion(0, 0, alpha)
         pose = (Pose(Point(x, y, 0.0), Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])))
@@ -207,9 +208,14 @@ class Strategy:
         y = self.shelf_positions[str(self.trophy_goal.shelf)]["y"]
         alpha = self.shelf_positions[str(self.trophy_goal.shelf)]["alpha"]
         self.move_base(x, y, alpha)
+    """
+
+    def move_base(self):
+        self.pub_base.publish(String("shelf{}".format(self.trophy_goal.shelf)))
 
     def return_base(self):
-        self.move_base(self.base_x, self.base_y, self.base_alpha)
+        # self.move_base(self.base_x, self.base_y, self.base_alpha)
+        self.pub_base.publish(String("bin"))
 
     def trophy_update(self, msg):
         # TODO: Create list of Trophy objects from input and compare it with current list
@@ -228,12 +234,14 @@ class Strategy:
             pass
 
     def base_in_position(self, msg):
-        if self.phase == -1:
-            pass
-        elif self.phase == 0:
-            self.pub_arm.publish(self.trophy_goal.z)
-        elif self.phase == 1:
-            self.pub_arm.publish(self.arm_height_drop)
+        message = msg.data
+        if message == "OK MOVE":
+            if self.phase == -1:
+                pass
+            elif self.phase == 0:
+                self.pub_arm.publish(self.trophy_goal.z)
+            elif self.phase == 1:
+                self.pub_arm.publish(self.arm_height_drop)
 
     def arm_in_position(self, msg):
         if self.phase == -1:
