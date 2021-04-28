@@ -35,6 +35,7 @@ class Strategy:
 
         # TODO: Update data.json with proper values
 
+        rospy.loginfo("SCEN: " + scenario_file_path)
         with open(scenario_file_path) as scenario_file:
             scenario = yaml.load(scenario_file)
 
@@ -267,7 +268,7 @@ class Strategy:
 
 
 if __name__ == '__main__':
-    scenario_file_arg = sys.argv[0]
+    scenario_file_arg = sys.argv[1]
     try:
         Strategy(scenario_file_arg)
         while not rospy.is_shutdown():
