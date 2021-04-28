@@ -212,11 +212,11 @@ class Strategy:
     """
 
     def move_base(self):
-        self.pub_base.publish(String("shelf{}".format(self.trophy_goal.shelf)))
+        self.pub_travel.publish(String("shelf{}".format(self.trophy_goal.shelf)))
 
     def return_base(self):
         # self.move_base(self.base_x, self.base_y, self.base_alpha)
-        self.pub_base.publish(String("bin"))
+        self.pub_travel.publish(String("bin"))
 
     def trophy_update(self, msg):
         # TODO: Create list of Trophy objects from input and compare it with current list
