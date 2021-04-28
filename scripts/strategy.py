@@ -79,7 +79,7 @@ class Strategy:
                     x=self.shelf_positions[str(shelf_id)]["x"],
                     y=self.shelf_positions[str(shelf_id)]["y"],
                     z=self.trophy_heights[str(trophy)],
-                    shelf=s,
+                    shelf=shelf_id,
                     level=trophy,
                     w=0
                 )
