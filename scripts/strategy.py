@@ -29,7 +29,7 @@ class Trophy:
 
 
 class Strategy:
-    def __init__(self, scenario_file_path):
+    def __init__(self, scenario_file_path, data_file_path):
 
         rospy.init_node("strategy")
 
@@ -39,7 +39,7 @@ class Strategy:
         with open(scenario_file_path) as scenario_file:
             scenario = yaml.load(scenario_file)
 
-        with open("data.json") as data_file:
+        with open(data_file_path) as data_file:
             data = json.load(data_file)
 
         self.base_x = data["base"]["x"]
@@ -269,8 +269,9 @@ class Strategy:
 
 if __name__ == '__main__':
     scenario_file_arg = sys.argv[1]
+    data_file_arg = sys.argv[2]
     try:
-        Strategy(scenario_file_arg)
+        Strategy(scenario_file_arg, data_file_arg)
         while not rospy.is_shutdown():
             rospy.spin()
     except rospy.ROSInterruptException:

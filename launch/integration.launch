@@ -27,7 +27,8 @@
   <!-- Base controller -->
   <node name="robot_base_controller" pkg="farscope_project_entry" type="base_controller.py" output="screen"/>
 
-  <node name="strategy" pkg="farscope_project_entry" type="strategy.py" output="screen" args="$(arg scenario_file)"/>
+  <arg name="data_file" default="$(find farscope_project_entry)/scripts/data.json" />
+  <node name="strategy" pkg="farscope_project_entry" type="strategy.py" output="screen" args="$(arg scenario_file) $(arg data_file)"/>
 
   <!-- Map server provided map source -->
   <arg name="map_file" default="$(find farscope_project_entry)/maps/sim_map.yaml"/>
