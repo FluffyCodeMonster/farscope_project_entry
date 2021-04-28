@@ -124,7 +124,7 @@ class Strategy:
     def update_trophy_map(self):
         self.trophy_map = np.zeros((4, 8))
         for trophy in self.trophy_list:
-            self.trophy_map[int(trophy.level), int(trophy.shelf)] = self.trophy_map[int(trophy.level), int(trophy.shelf)] + 1
+            self.trophy_map[int(trophy.level), int(trophy.shelf)-1] = self.trophy_map[int(trophy.level), int(trophy.shelf)-1] + 1
 
     """
     def score_one(self):
