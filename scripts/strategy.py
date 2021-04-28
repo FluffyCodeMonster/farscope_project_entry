@@ -194,7 +194,7 @@ class Strategy:
         pass
 
     def calculate_difficulty(self, trophy):
-        difficulty = (trophy.w / (self.shelf_width / 2)) ^ 8
+        difficulty = (trophy.w / (self.shelf_width / 2)) ** 8
         return difficulty
 
     """
