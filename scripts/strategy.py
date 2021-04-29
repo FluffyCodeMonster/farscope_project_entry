@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from std_msgs.msg import String, Float32, Int16, Float32MultiArray
+from std_msgs.msg import String, Float32, Int16, Float32MultiArray, Bool
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
 import rospy
 import json
@@ -102,10 +102,8 @@ class Strategy:
         self.sub_travel = rospy.Subscriber("/base_cntrl/cost_list", Float32MultiArray, self.score)
         # Receive information that base is in position
         self.sub_base = rospy.Subscriber("/base_cntrl/out_result", String, self.base_in_position)
-        # Receive information that arm is in position
-        self.sub_arm = rospy.Subscriber("/arm_result", String, self.arm_in_position)
         # Receive information that gripper completed task
-        self.sub_gripper = rospy.Subscriber("/gripper_result", String, self.gripper_in_position)
+        self.sub_gripper = rospy.Subscriber("/manipulator/gripper_result", Bool, self.gripper_in_position)
         # Receive updates about the trophies from perception
         self.sub_trophy = rospy.Subscriber("/trophy_update", String, self.trophy_update)
 
@@ -115,11 +113,7 @@ class Strategy:
             rate.sleep()
         rospy.loginfo("Loading completed")
 
-        # Start process of trophy search
-        self.travel_times()
-
-        # Get trophy phase has started
-        self.phase = 1
+        self.retract_arm()
 
     def update_trophy_map(self):
         self.trophy_map = np.zeros((4, 8))
@@ -211,6 +205,9 @@ class Strategy:
         self.move_base(x, y, alpha)
     """
 
+    def retract_arm(self):
+        self.pub_gripper.publish(String("fold"))
+
     def move_base(self):
         self.pub_travel.publish(String("shelf{}".format(self.trophy_goal.shelf)))
 
@@ -240,31 +237,25 @@ class Strategy:
             if self.phase == -1:
                 pass
             elif self.phase == 0:
-                self.pub_arm.publish(self.trophy_goal.z)
+                self.pub_arm.publish(Int16(int(self.trophy_goal.level)))
+                self.pub_gripper.publish(String("grip"))
             elif self.phase == 1:
-                self.pub_arm.publish(self.arm_height_drop)
-
-    def arm_in_position(self, msg):
-        if self.phase == -1:
-            pass
-        elif self.phase == 0:
-            self.pub_gripper.publish("grip")
-        elif self.phase == 1:
-            self.pub_gripper.publish("drop")
+                self.pub_gripper.publish("deposit")
 
     def gripper_in_position(self, msg):
         result = msg.data
         if self.phase == -1:
-            pass
+            self.phase = 0
+            self.travel_times()
         elif self.phase == 0:
-            if result == "success":
-                self.return_base()
+            if result:
                 self.phase = 1
+                self.travel_times()
             else:
                 self.travel_times()
         elif self.phase == 1:
-            self.travel_times()
             self.phase = 0
+            self.travel_times()
 
 
 if __name__ == '__main__':
