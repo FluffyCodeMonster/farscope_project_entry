@@ -250,7 +250,7 @@ class Strategy:
         elif self.phase == 0:
             if result:
                 self.phase = 1
-                self.move_base()
+                self.return_base()
             else:
                 self.travel_times()
         elif self.phase == 1:
