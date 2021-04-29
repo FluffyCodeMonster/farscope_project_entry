@@ -17,7 +17,10 @@ class Manipulator:
         #   "OBJECT GRIPPED"
         #   "MOVING OUT SHELF"
         #   "READY TO MOVE"
-        #   
+        #   "ITEM DEPOSITED"
+        #   "UNFOLDING"
+        #   "ARM FOLDED"
+        #   "READY TO MOVE"
         self.arm_status = rospy.Publisher("/manipulator/arm_status", String, queue_size=3)
         self.gripper_result = rospy.Publisher("/manipulator/gripper_result", Bool, queue_size=3)
 
@@ -57,6 +60,7 @@ class Manipulator:
 
         elif command == "fold":
             self.fold_arm()
+            self.gripper_result.publish(True)
 
         else:
             self.arm_log("READY")
