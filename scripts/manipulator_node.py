@@ -55,6 +55,9 @@ class Manipulator:
         elif command == "deposit":
             self.deposit()
 
+        elif command == "fold":
+            self.fold_arm()
+
         else:
             self.arm_log("READY")
 
