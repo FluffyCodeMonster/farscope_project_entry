@@ -34,6 +34,15 @@
   <!-- Gripper -->
   <node name="manipulator" pkg="farscope_project_entry" type="manipulator_node.py" output="screen"/>
 
+  <!-- Perception -->
+  <arg name="t" default="$-t" />
+  <arg name="i" default="$-i" />
+
+  <node name="trophy_detector" pkg="farscope_project_entry" type="trophy_detector.py" output="screen" args="$(arg i)"/>
+  <node name="image_forwarder" pkg="farscope_project_entry" type="image_forwarder.py" output="screen"/>
+  <node name="trophy_cluster" pkg="farscope_project_entry" type="trophy_cluster.py" output="screen"/>
+  <node name="trophy_projector" pkg="farscope_project_entry" type="trophy_projector.py" output="screen" args="$(arg t)"/>
+
   <!-- Map server provided map source -->
   <arg name="map_file" default="$(find farscope_project_entry)/maps/sim_map.yaml"/>
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)">
