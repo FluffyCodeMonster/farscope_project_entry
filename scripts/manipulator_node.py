@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from farscope_project_entry.farscope_robot_utils import ArmMover, GripperController, BaseDriver
+from farscope_group_project.farscope_robot_utils import ArmMover, GripperController, BaseDriver
 from std_msgs.msg import Bool, String, Int16
 
 # Create class for the manipulator
@@ -34,7 +34,7 @@ class Manipulator:
 
         # Publish to topics to indicate status
         # Publishing to the topics at the start of the script may not publish correctly
-        #self.gripper_result.publish("null")
+        self.gripper_result.publish("null")
 
         # Subscribe to topics from the strat team
         # Callback on gripper_cmd
@@ -75,10 +75,6 @@ class Manipulator:
 
     # Function runs a apickup routine @ a certain shelf height
     def pickup_routine(self):
-
-        # Move base back to avoid collision
-        self.base_driver.move(-0.3, 0, 0, 2)
-
         # Unfold wrist
         self.arm_mover.move(wrist_2_cmd = 1.6)
 
@@ -94,9 +90,9 @@ class Manipulator:
         # Move robot into shelf to grab object
         # THIS NEEDS WORK
         # Current base movements are taken form Arthurs example
-        self.base_driver.move(0.2, -0.0)
+        self.base_driver.move(0.3, -0.0)
         #base_driver.move(0.3, -0.1)
-        self.base_driver.move(0.1, -0.00)
+        self.base_driver.move(0.3, -0.00)
         #base_driver.move(0.3, -0.05)
 
         self.arm_log("GRIPPING")
