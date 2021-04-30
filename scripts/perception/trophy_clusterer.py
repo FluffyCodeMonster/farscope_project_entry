@@ -1,6 +1,8 @@
 import sys, rospy
 # TODO Temp - need a better message format.
 from std_msgs.msg import String
+#from farscope_robot_utils import where_is_this_trophy
+from trophy_locater import where_is_this_trophy, where_are_these_trophies
 
 # Coming from 'trophy_projector.py'
 def parse_input(msg_string):
@@ -25,16 +27,26 @@ def parse_input(msg_string):
 def on_estimates(centre_estimates):
     [time, trophy_centres] = parse_input(centre_estimates.data)
 
+
+
     # Testing
     print()
     print(" *** New centres *** ")
     print("Time: {}s, {}nsec".format(time.secs, time.nsecs))
-    for centre in trophy_centres:
-        print(centre)
+    print(where_are_these_trophies(trophy_centres))
+
+    #for centre in trophy_centres:
+     #   print(centre)
+      #  print(where_are_these_trophies(centre))
+
+
+
+
 
 rospy.init_node('trophy_clusterer')
 
 rospy.Subscriber('trophy_coord_ests_3d', String, on_estimates)
+
 #rospy.Publisher(...)
 
 while not rospy.is_shutdown():
