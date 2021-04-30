@@ -75,7 +75,7 @@ class Strategy:
             shelf_id = s["id"]
             for trophy in s["trophies"]:
                 t = Trophy(
-                    trophy_id="{}{}0".format(s, trophy),
+                    trophy_id="{}{}0".format(shelf_id, trophy),
                     x=self.shelf_positions[str(shelf_id)]["x"],
                     y=self.shelf_positions[str(shelf_id)]["y"],
                     z=self.trophy_heights[str(trophy)],
