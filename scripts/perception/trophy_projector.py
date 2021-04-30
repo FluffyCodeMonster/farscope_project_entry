@@ -416,7 +416,7 @@ listener = tf2_ros.TransformListener(tf_buffer)
 #########################################################
 
 # TODO Need to define the correct message types for Msg1 and Msg2.
-# Message coming from trophy detector. Will need:
+# Message coming from trophy_detector. Will need:
 # {(Camera pose, coordinates in frame (x, y)), ...}
 # TODO Currently reading in as a string, but this is only a temporary solution.
 coord_sub = rospy.Subscriber("detected_trophy_centres", String, on_centres)

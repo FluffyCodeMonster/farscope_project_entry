@@ -37,8 +37,11 @@
   <!-- Perception -->
   <arg name="t" default="$-t" />
   <arg name="i" default="$-i" />
+  <arg name="classes" default="$(find farscope_project_entry)/scripts/perception/trophy_detector/classes.names" />
+  <arg name="yolocfg" default="$(find farscope_project_entry)/scripts/perception/trophy_detector/yolov3.cfg" />
+  <arg name="yoloweights" default="$(find farscope_project_entry)/scripts/perception/trophy_detector/yolov3.weights" />
 
-  <node name="trophy_detector" pkg="farscope_project_entry" type="trophy_detector.py" output="screen" args="$(arg i)"/>
+  <node name="trophy_detector" pkg="farscope_project_entry" type="trophy_detector.py" output="screen" args="$(arg classes) $(arg yolocfg) $(arg yoloweights) $(arg i)"/>
   <node name="image_forwarder" pkg="farscope_project_entry" type="image_forwarder.py" output="screen"/>
   <node name="trophy_clusterer" pkg="farscope_project_entry" type="trophy_clusterer.py" output="screen"/>
   <node name="trophy_projector" pkg="farscope_project_entry" type="trophy_projector.py" output="screen" args="$(arg t)"/>
