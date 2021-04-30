@@ -40,7 +40,7 @@
 
   <node name="trophy_detector" pkg="farscope_project_entry" type="trophy_detector.py" output="screen" args="$(arg i)"/>
   <node name="image_forwarder" pkg="farscope_project_entry" type="image_forwarder.py" output="screen"/>
-  <node name="trophy_cluster" pkg="farscope_project_entry" type="trophy_cluster.py" output="screen"/>
+  <node name="trophy_clusterer" pkg="farscope_project_entry" type="trophy_clusterer.py" output="screen"/>
   <node name="trophy_projector" pkg="farscope_project_entry" type="trophy_projector.py" output="screen" args="$(arg t)"/>
 
   <!-- Map server provided map source -->
