@@ -34,7 +34,7 @@ class Manipulator:
 
         # Publish to topics to indicate status
         # Publishing to the topics at the start of the script may not publish correctly
-        self.gripper_result.publish("null")
+        # self.gripper_result.publish("null")
 
         # Subscribe to topics from the strat team
         # Callback on gripper_cmd
