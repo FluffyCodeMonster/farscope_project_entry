@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # FT 12/04/21
 # Forwards images from the camera to the YOLO detector on request (so that YOLO can keep up).
 

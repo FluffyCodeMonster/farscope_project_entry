@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Code based on https://opencv-tutorial.readthedocs.io/en/latest/yolo/yolo.html
 
 # YOLO object detection
