@@ -17,12 +17,12 @@ def setup_yolo():
     ###WHITE = (255, 255, 255)
 
     # Load names of classes and get random colors
-    classes = open('classes.names').read().strip().split('\n')
+    classes = open(class_names_path).read().strip().split('\n')
     np.random.seed(42)
     colors = np.random.randint(0, 255, size=(len(classes), 3), dtype='uint8')
 
     # Give the configuration and weight files for the model and load the network.
-    net = cv.dnn.readNetFromDarknet('yolov3.cfg', 'yolov3.weights')
+    net = cv.dnn.readNetFromDarknet(cfg_path, weights_path)
     net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
     # net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
 
@@ -137,6 +137,8 @@ def on_image(image_msg):
     # Publish an image request.
     request_pub.publish()
 
+print(sys.argv)
+
 # Command line argument processing
 if '-h' in sys.argv:
     # TODO Make sure these topic names are up to date.
@@ -148,14 +150,19 @@ if '-h' in sys.argv:
     print()
     print("2D coordinates of detected trophy centres on the camera1 image plane are published to the topic '/detected_trophy_centres'.")
     print()
+    print("Usage:")
+    print()
+    print("   python3 trophy_detector.py  class_names_path  cfg_path  weights_path")
+    print()
     print("To also publish the images from the camera with trophy bounding boxes, start the detector with")
     print()
     # TODO Should this be 'python3'?
-    print("   python3 trophy_detector.py -i")
+    print("   python3 trophy_detector.py  class_names_path  cfg_path  weights_path")
     print()
     print("Output images with detected trophies labelled (with bounding boxes) will be published to the topic '/image_trophies_detected'.")
     print()
     exit(0)
+'''
 elif  '-i' in sys.argv:
     # bbs = bounding boxes
     publish_images_with_bbs = True
@@ -164,6 +171,19 @@ elif  '-i' in sys.argv:
     print()
 else:
     # bbs = bounding boxes
+    publish_images_with_bbs = False
+'''
+
+class_names_path = sys.argv[1]
+cfg_path = sys.argv[2]
+weights_path = sys.argv[3]
+if (len(sys.argv) == 5) and (sys.argv[4] == '-i'):
+    # bbs = bounding boxes
+    publish_images_with_bbs = True
+    print()
+    print("*** Publishing images with bounding boxes to topic '/image_trophies_detected'. ***")
+    print()
+else:
     publish_images_with_bbs = False
 
 setup_yolo()
