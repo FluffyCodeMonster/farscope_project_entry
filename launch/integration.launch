@@ -35,8 +35,8 @@
   <node name="manipulator" pkg="farscope_project_entry" type="manipulator_node.py" output="screen"/>
 
   <!-- Perception -->
-  <arg name="t" default="$-t" />
-  <arg name="i" default="$-i" />
+  <arg name="t" default="-t" />
+  <arg name="i" default="-i" />
   <arg name="classes" default="$(find farscope_project_entry)/scripts/perception/trophy_detector/classes.names" />
   <arg name="yolocfg" default="$(find farscope_project_entry)/scripts/perception/trophy_detector/yolov3.cfg" />
   <arg name="yoloweights" default="$(find farscope_project_entry)/scripts/perception/trophy_detector/yolov3.weights" />
