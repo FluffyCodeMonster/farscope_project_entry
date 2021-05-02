@@ -26,6 +26,23 @@ def parse_input(msg_string):
 
 def on_estimates(centre_estimates):
     [time, trophy_centres] = parse_input(centre_estimates.data)
+    
+    lst = where_are_these_trophies(trophy_centres)
+
+    tmp_dict = {key: i for i, key in enumerate(lst)}
+
+    #had to flip the keys and values, 
+    #couldn't figure out how to get the dictionary comprehention to do what I wanted first time....
+    new_dict = dict(zip(tmp_dict.values(), tmp_dict.keys()))
+
+    final_dict = json_dict(new_dict)
+
+
+
+
+    print(final_dict)
+    print(type(final_dict))
+
 
 
 
@@ -41,31 +58,61 @@ def on_estimates(centre_estimates):
     #print('coords: ',coords)
 
     #print(type(trophy_centres))
+
     
-    for i ,centre in enumerate(trophy_centres):
-        shelf_id, level_id, pos_on_shelf, coord = where_is_this_trophy(centre)
+    #for i ,centre in enumerate(trophy_centres):
+     #   shelf_id, level_id, pos_on_shelf, coord = where_is_this_trophy(centre)
         #print('shelf id: ', shelf_id, 'level_id: ', level_id, 'position: ', pos_on_shelf, 'coords: ', coord)
 
-        
-        dict_template = {'shelf id' : shelf_id, 'level_id': level_id, 'position on shelf': pos_on_shelf, 'coordinates': coord}
 
-        enum_dict = {i:dict_template}
+#        dict_template = {i:{'shelf id' : shelf_id, 'level_id': level_id, 'position on shelf': pos_on_shelf, 'coordinates': coord}}
+
+        
+ #       dict_string = json_dict(dict_template)
+
+  #      dic
+
+
+
+
+
+        
+    
+
+
+
+
+
+
+
+
+        
+        
+
+
+        
+
+       
+
+
+        
         
         #print(test)
-        dict_string = json_dict(enum_dict)
         
-        i = 1 + i
-        final_dict = {}
-        final_dict.update(enum_dict)    
-        print(final_dict)
+       
+        #i = i+1
+        #print(enum_dict)
+        
 
-    pub.publish(String(dict_string))
+    #pub.publish(String())
 
     
 #converts dict into string
 def json_dict(input_dict):
     dict_string= json.dumps(input_dict, separators = (',', ':'))
     return dict_string
+
+
 
 
 
