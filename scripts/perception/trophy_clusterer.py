@@ -41,16 +41,21 @@ def on_estimates(centre_estimates):
     #print('coords: ',coords)
 
     #print(type(trophy_centres))
-    for centre in trophy_centres:
+    
+    for i ,centre in enumerate(trophy_centres):
         shelf_id, level_id, pos_on_shelf, coord = where_is_this_trophy(centre)
         #print('shelf id: ', shelf_id, 'level_id: ', level_id, 'position: ', pos_on_shelf, 'coords: ', coord)
         dict_template = {'shelf id' : shelf_id, 'level_id': level_id, 'position on shelf': pos_on_shelf, 'coordinates': coord}
-        #print(test)
-        dict_string = json_dict(dict_template)
-        print(type(dict_string))
-        print(dict_string)
-       
 
+        enum_dict = {i:dict_template}
+        
+        #print(test)
+        dict_string = json_dict(enum_dict)
+        
+        i = 1 + i    
+        print(dict_string)
+
+    pub.publish(String(dict_string))
 
     
 
@@ -72,6 +77,10 @@ def json_dict(input_dict):
 rospy.init_node('trophy_clusterer')
 
 rospy.Subscriber('trophy_coord_ests_3d', String, on_estimates)
+
+pub = rospy.Publisher('trophy_update', String, queue_size = 3)
+
+
 
 
 
