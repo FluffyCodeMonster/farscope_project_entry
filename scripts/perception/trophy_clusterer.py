@@ -45,6 +45,8 @@ def on_estimates(centre_estimates):
     for i ,centre in enumerate(trophy_centres):
         shelf_id, level_id, pos_on_shelf, coord = where_is_this_trophy(centre)
         #print('shelf id: ', shelf_id, 'level_id: ', level_id, 'position: ', pos_on_shelf, 'coords: ', coord)
+
+        
         dict_template = {'shelf id' : shelf_id, 'level_id': level_id, 'position on shelf': pos_on_shelf, 'coordinates': coord}
 
         enum_dict = {i:dict_template}
@@ -52,13 +54,15 @@ def on_estimates(centre_estimates):
         #print(test)
         dict_string = json_dict(enum_dict)
         
-        i = 1 + i    
-        print(dict_string)
+        i = 1 + i
+        final_dict = {}
+        final_dict.update(enum_dict)    
+        print(final_dict)
 
     pub.publish(String(dict_string))
 
     
-
+#converts dict into string
 def json_dict(input_dict):
     dict_string= json.dumps(input_dict, separators = (',', ':'))
     return dict_string
