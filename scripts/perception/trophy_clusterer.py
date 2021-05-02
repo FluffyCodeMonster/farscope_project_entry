@@ -3,7 +3,7 @@ import sys, rospy
 from std_msgs.msg import String
 #from farscope_robot_utils import where_is_this_trophy
 from trophy_locater import where_is_this_trophy, where_are_these_trophies
-
+import json
 # Coming from 'trophy_projector.py'
 def parse_input(msg_string):
     # String format:
@@ -30,14 +30,40 @@ def on_estimates(centre_estimates):
 
 
     # Testing
-    print()
-    print(" *** New centres *** ")
-    print("Time: {}s, {}nsec".format(time.secs, time.nsecs))
-    print(where_are_these_trophies(trophy_centres))
+    #print()
+    #print(" *** New centres *** ")
+    #print("Time: {}s, {}nsec".format(time.secs, time.nsecs))
+    #print(where_are_these_trophies(trophy_centres))
+    #shelf_id, level_id,  = where_are_these_trophies(trophy_centres)
+    #print('shelf id: ', shelf_id)
+    #print('level id:', level_id)
+    #print('position: ', pos_on_shelf)
+    #print('coords: ',coords)
 
-    #for centre in trophy_centres:
-     #   print(centre)
-      #  print(where_are_these_trophies(centre))
+    #print(type(trophy_centres))
+    for centre in trophy_centres:
+        shelf_id, level_id, pos_on_shelf, coord = where_is_this_trophy(centre)
+        #print('shelf id: ', shelf_id, 'level_id: ', level_id, 'position: ', pos_on_shelf, 'coords: ', coord)
+        dict_template = {'shelf id' : shelf_id, 'level_id': level_id, 'position on shelf': pos_on_shelf, 'coordinates': coord}
+        #print(test)
+        dict_string = json_dict(dict_template)
+        print(type(dict_string))
+        print(dict_string)
+       
+
+
+    
+
+def json_dict(input_dict):
+    dict_string= json.dumps(input_dict, separators = (',', ':'))
+    return dict_string
+
+
+
+
+
+
+
 
 
 
@@ -46,6 +72,13 @@ def on_estimates(centre_estimates):
 rospy.init_node('trophy_clusterer')
 
 rospy.Subscriber('trophy_coord_ests_3d', String, on_estimates)
+
+
+
+
+
+
+
 
 #rospy.Publisher(...)
 
