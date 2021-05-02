@@ -109,6 +109,18 @@ will move the base forward by 1m.
 
 The "spin" command will make the robot spin 360 degrees. And the "shelf3" command will navigate the robot to a vicinity of shelf #3 although the proximity to the shelf will be rather loose. 
 
+To fold the arm: 
+
+rostopic pub /arm_cmd std_msgs/String "fold"
+
+To scout:
+
+rostopic pub -1 /base_cntrl/scout_to_pose geometry_msgs/Pose '{position: {x: -1.0, y: -2.0, z: 0.0.0}, orientation: {w: 1.0}}'
+
+OR:
+
+rostopic pub /base_cntrl/in_cmd std_msgs/String "scout"
+
 And finally the out_result topic can be used to get a feedback about the completion of the required action. So if one subscribes to it:
 
 rostopic echo /base_cntrl/out_result
