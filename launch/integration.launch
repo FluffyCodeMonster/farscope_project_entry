@@ -29,7 +29,7 @@
 
   <!-- Strategy -->
   <arg name="data_file" default="$(find farscope_project_entry)/scripts/data.json" />
-  <node name="strategy" pkg="farscope_project_entry" type="strategy.py" output="screen" args="$(arg scenario_file) $(arg data_file)"/>
+  <node name="strategy" pkg="farscope_project_entry" type="strategy_no_scenario.py" output="screen" args="$(arg data_file)"/>
 
   <!-- Gripper -->
   <node name="manipulator" pkg="farscope_project_entry" type="manipulator_node.py" output="screen"/>
