@@ -28,7 +28,8 @@ def on_estimates(centre_estimates):
     [time, trophy_centres] = parse_input(centre_estimates.data)
     
     lst = where_are_these_trophies(trophy_centres)
-
+    #dict comprehension which gets all sublists, 
+    #unfortuantely makes them the key which wasn't desired, though
     tmp_dict = {key: i for i, key in enumerate(lst)}
 
     #had to flip the keys and values, 
