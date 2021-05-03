@@ -25,22 +25,11 @@ class Strategy:
 
         rospy.init_node("strategy")
 
-        # TODO: Update data.json with proper values
-
         with open(data_file_path) as data_file:
             data = json.load(data_file)
 
-        self.base_x = data["base"]["x"]
-        self.base_y = data["base"]["y"]
-        self.base_alpha = data["base"]["alpha"]
-
-        self.shelf_positions = data["shelf_positions"]
-        self.trophy_positions = data["trophy_positions"]
-        self.trophy_heights = data["trophy_heights"]
-
         self.shelf_width = data["env"]["shelf_width"]
         self.max_neighborhood_score = data["env"]["max_neighborhood_score"]
-        self.arm_height_drop = data["env"]["arm_height_drop"]
 
         # Current Mode of Robot
         # 0 = Idle
