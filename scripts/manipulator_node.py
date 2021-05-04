@@ -101,9 +101,9 @@ class Manipulator:
         # To prevent trophy slip we need to segment the arm movement to keep it level
         self.arm_mover.move(shoulder_lift_cmd_in=-2.40,
                             elbow_cmd_in=2.4, wrist_2_cmd=3.14, duration_in=timing)
-        self.arm_log("ARM FOLDED")
 
     # Function to unfold the arm for deposit
+
     def unfold_arm(self):
         self.arm_log("UNFOLDING ARM")
         self.arm_mover.move(shoulder_lift_cmd_in=0,
@@ -131,6 +131,10 @@ class Manipulator:
         movement = msg.data
         # Adjust in the x plane before moving into shelf
         self.base_driver.move(0, (movement*0.5), 0, 2)
+
+        data = msg.data
+        self.base_driver.move(0, data, 0, 2)
+
         self.arm_log("BASE ADJUSTED")
 
         # Move robot into shelf to grab object
