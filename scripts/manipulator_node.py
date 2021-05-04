@@ -36,12 +36,8 @@ class Manipulator:
         # Hardcoded shelf heights
         self.shoulder_heights = [0.15, -0.25, -0.6, -1.0]
 
-        # Publish to topics to indicate status
-        # Publishing to the topics at the start of the script may not publish correctly
-        # self.gripper_result.publish("null")
-
         # Subscribe to topics from the strat team
-        # Callback on gripper_cmd
+        # Callbacks on messages recieved
         self.shelf_sub = rospy.Subscriber(
             "/arm_cmd", Int16, self.shelf_selection)
         self.gripper_cmd = rospy.Subscriber(
@@ -68,7 +64,8 @@ class Manipulator:
 
         elif command == "fold":
             self.fold_arm()
-            self.gripper_result.publish(True)
+            # self.gripper_result.publish(True)
+            self.arm_log("ARM FOLDED")
 
         else:
             self.arm_log("READY")
@@ -97,7 +94,7 @@ class Manipulator:
         self.arm_mover.move(
             shoulder_lift_cmd_in=self.shoulder_heights[self.taget_shelf], elbow_cmd_in=1.0, wrist_2_cmd=1.6)
 
-        self.arm_log("ARM @ SHELF " + str(self.taget_shelf))
+        self.arm_log("ARM @ SHELF")
 
         # Short pause to wait for adjustments from perception
         self.adjust()
@@ -162,7 +159,6 @@ class Manipulator:
         self.arm_status.publish(message)
 
     # Function to make small adjustments to the base position from perception advice
-
     def adjust(self):
         # Wait for message from perception team
         movement = rospy.wait_for_message("/perception_adjust", Float32)
