@@ -130,7 +130,7 @@ class Manipulator:
     def adjust_and_grip(self, msg):
         # Adjust in the x plane before moving into shelf
         data = msg.data
-        self.base_driver(0, data, 0, 2)
+        self.base_driver.move(0, data, 0, 2)
         self.arm_log("BASE ADJUSTED")
 
         # Move robot into shelf to grab object
