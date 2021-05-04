@@ -62,7 +62,7 @@ def move_confirmed(msg_string):
             image_request_pub.publish("Image_request")
 
 def image_taken(msg_string):
-    if (msg_string.data == "Trophy_estimates_obtained")
+    if (msg_string.data == "Trophy_estimates_obtained"):
         if (debug_output):
             print("Image confirmation received")
 
