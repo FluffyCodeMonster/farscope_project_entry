@@ -87,7 +87,7 @@ rospy.init_node('trophy_clusterer')
 
 rospy.Subscriber('trophy_coord_ests_3d', String, on_estimates)
 
-pub = rospy.Publisher('trophy_update', String, queue_size = 3)
+pub = rospy.Publisher('/trophy_update', String, queue_size = 3)
 
 
 
