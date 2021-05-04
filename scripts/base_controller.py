@@ -244,12 +244,12 @@ class BaseController:
         elif cmd.data == "get_cost_of_travel":
             # publish list of path costs to all shelves
             self.get_cost_list.publish(self.calculate_cost_of_travel())
-        elif cmd.data == "scout":
-            if (self.move_to_pose(self.scout_pose, False)):
-                self.base_driver.move(0, 0, 0.1, 105)
-                self.base_pub.publish("completed scouting")
-            else:
-                self.base_pub.publish("BAD scouting")
+        #elif cmd.data == "scout":
+        #    if (self.move_to_pose(self.scout_pose, False)):
+        #        self.base_driver.move(0, 0, 0.1, 105)
+        #        self.base_pub.publish("completed scouting")
+        #    else:
+        #        self.base_pub.publish("BAD scouting")
     
     # When user wants the robot to rotate, then this will be called with the number of degrees passed.
     # Positive number: rotating clock wise, negative: rotating counter clock wise

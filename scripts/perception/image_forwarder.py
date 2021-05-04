@@ -6,55 +6,54 @@ import threading
 import sys, rospy
 from sensor_msgs.msg import Image
 # Use an empty message to send a signal.
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, String
 
-#def on_image(image):
-#    if ((rospy.get_rostime()).nsecs - last_time_nsecs > pub_intv_nsecs):
-#        last_time_nsecs = (rospy.get_rostime()).nsecs
-#        image_pub.publish(image)
-
-#pub_intv_nsecs = 1000000000 # Publish image every 4 seconds.
-#last_time_nsecs = (rospy.get_rostime()).nsecs
 
 # TODO Will these two block each other? Do I need multithreading? Could multithreading lead
 # to a race condition s.t. a request is missed?
 
 class RequestListener (threading.Thread):
-    def __init__(self, threadID, name, counter):
+    def __init__(self, request_name, ros_topic, ros_type, callback_function):
         threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.name = name
-        self.counter = counter
     
     def run(self):
-        print('Starting request listener thread')
-        request_sub = rospy.Subscriber("trophy_image_request", Empty, on_request)
+        print('Starting request listener thread: {}'.format(request_name))
+        request_sub = rospy.Subscriber(ros_topic, ros_type, callback_function)
 
 def on_image(image):
-    global image_requested
-    #if image_requested:
-    #    image_pub.publish(image)
-    #    print('Success')
-    # If a new image has been requested:
-    if image_requested:
+    global image_requested_from_detector
+    global image_requested_from_robot
+    # If a new image has been requested (from trophy detector and robot):
+    if image_requested_from_detector and image_requested_from_robot:
         image_pub.publish(image)
-        image_requested = False
-        print('Published')
+        image_requested_from_detector = False
+        image_requested_from_robot = False
+        print('Image published to trophy detector')
 
-def on_request(request):
-    global image_requested
+def on_detector_request(request):
+    global image_requested_from_detector
     print("Request received")
-    image_requested = True
+    image_requested_from_detector = True
 
-image_requested = False
+def on_robot_request(request_string):
+    global image_requested_from_robot
+    if (request_string.data == "Image_request"):
+        print("Image request received from robot")
+        image_requested_from_robot = True
+
+image_requested_from_detector = False
+image_requested_from_robot = False
 
 rospy.init_node('image_forwarder')
 image_sub = rospy.Subscriber("camera1/image_raw", Image, on_image, queue_size=1)
 image_pub = rospy.Publisher("image_for_trophy_detection", Image)
 
-# Start request listener thread:
-request_listener = RequestListener(1, "Request listener", 1)
-request_listener.start()
+# Start trophy detector request listener thread:
+trophy_detector_request_listener = RequestListener("trophy detector", "trophy_image_request", Empty, on_detector_request)
+trophy_detector_request_listener.start()
+# Start robot image request listener thread:
+robot_image_request_listener = RequestListener("robot listener", "/trophy_image_robot_request_response", String, on_robot_request)
+robot_image_request_listener.start()
 
 # Keep alive
 while not rospy.is_shutdown():

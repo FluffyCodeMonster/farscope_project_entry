@@ -303,6 +303,8 @@ def on_centres(centres_msg):
             # Publish point cloud.
             point_cloud.header.stamp = rospy.Time.now()
             point_cloud_pub.publish(point_cloud)
+    
+    image_projected.publish("Trophy_estimates_obtained")
 
 # TODO Temp - need to develop a custom message format
 def gen_msg_string(centres):
@@ -433,6 +435,10 @@ if testing:
 # Send list of new trophy coordinate estimates to 'clustering' node.
 # TODO Define a custom message type - sending as String is a temporary solution! 
 coord_pub = rospy.Publisher("trophy_coord_ests_3d", String)
+
+# Image projection must only take place when the robot is stationary. This message notifies the robot
+# that the image has been processed and it is okay to continue.
+image_projected = rospy.Publisher("/trophy_image_request_response", String)
 
 # TODO Do I need the while, or just the spin()? Check that I am doing this correctly.
 while not rospy.is_shutdown():
