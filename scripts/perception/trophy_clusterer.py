@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys, rospy
 # TODO Temp - need a better message format.
 from std_msgs.msg import String
