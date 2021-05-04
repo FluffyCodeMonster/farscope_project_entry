@@ -47,7 +47,7 @@ class Strategy:
 
         # List of all Trophies, Constantly Updated
         self.trophy_list = []
-        self.trophy_map = None
+        self.trophy_map = self.trophy_map = np.zeros((4, 8))
         self.neighbor_score_mask = data["neighbor_score_mask"]
         self.trophy_goal = None
 
@@ -59,20 +59,22 @@ class Strategy:
         self.pub_arm = rospy.Publisher('/arm_cmd', Int16, queue_size=3)
         # Send request to grip or drop trophy
         self.pub_gripper = rospy.Publisher('/gripper_cmd', String, queue_size=3)
+        # Send update to gripper
+        self.pub_update = rospy.Publisher('/perception_adjust', Float32, queue_size=3)
 
         # Receive list of travel costs to different shelves
         self.sub_travel = rospy.Subscriber("/base_cntrl/cost_list", Float32MultiArray, self.score)
         # Receive information that base is in position
         self.sub_base = rospy.Subscriber("/base_cntrl/out_result", String, self.base_in_position)
-        # Receive information that gripper completed task
-        self.sub_gripper = rospy.Subscriber("/manipulator/gripper_result", Bool, self.gripper_in_position)
+        # Receive info on arm status
+        self.sub_arm = rospy.Subscriber("/manipulator/arm_status", String, self.arm_in_position)
         # Receive updates about the trophies from perception
         self.sub_trophy = rospy.Subscriber("/trophy_update", String, self.trophy_update)
 
         rospy.loginfo("Waiting for loading procedure to finish")
-        rate = rospy.Rate(2.0)
+        self.rate = rospy.Rate(2.0)
         while not rospy.get_param('target_spawning_complete', False):
-            rate.sleep()
+            self.rate.sleep()
         rospy.loginfo("Loading completed")
 
         self.retract_arm()
@@ -87,7 +89,7 @@ class Strategy:
         self.pub_gripper.publish(String("fold"))
 
     def go_scouting(self):
-        self.pub_base.publish(String("scout"))
+        self.pub_travel.publish(String("scout"))
 
     def travel_times(self):
         self.pub_travel.publish(String("get_cost_of_travel"))
@@ -156,7 +158,7 @@ class Strategy:
                     self.trophy_list[i] = new_trophy
                     new = False
             if new:
-                trophy_id = "{}{}{}".format(level, shelf, self.trophy_map[level, shelf])
+                trophy_id = "{}{}{}".format(level, shelf, self.trophy_map[level, shelf-1])
                 new_trophy = Trophy(
                     trophy_id=trophy_id,
                     x=coord[0],
@@ -183,25 +185,25 @@ class Strategy:
             self.phase = 0
             self.travel_times()
 
-    def gripper_in_position(self, msg):
+    def arm_in_position(self, msg):
         result = msg.data
-        if self.phase == -1:
-            self.go_scouting()
-        elif self.phase == 0:
-            if result:
+        if result == "ARM FOLDED":
+            if self.phase == -1:
+                self.go_scouting()
+            elif self.phase == 0:
                 self.phase = 1
                 self.return_base()
-            else:
+            elif self.phase == 1:
+                self.phase = 0
                 self.travel_times()
-        elif self.phase == 1:
-            self.phase = 0
-            self.travel_times()
+        elif result == "ARM @ SHELF":
+            self.gripper_adjustment()
 
-    def gripper_adjustment(self, msg):
+    def gripper_adjustment(self):
+        self.rate.sleep()
         for trophy in self.trophy_list:
             if trophy.trophy_id == self.trophy_goal.trophy_id:
-                pass
-                # publish: trophy.w
+                self.pub_update.publish(Float32(trophy.w))
 
 
 if __name__ == '__main__':
