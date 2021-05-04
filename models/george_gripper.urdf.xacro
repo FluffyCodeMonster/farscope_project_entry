@@ -98,7 +98,7 @@
       <material>Gazebo/Orange</material>
     </gazebo>
 
-       <!-- Contact sensor -->
+       <!-- Contact sensor
     <link name="contact_sensor_link">
         <collision name="contact_sensor_collision">
             <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -117,6 +117,7 @@
     </link>
     <gazebo reference="contact_sensor_link">
         <sensor name='my_contact' type='contact'>
+          <plugin name="my_plugin" filename="libcontact.so"/>
           <always_on>1</always_on>
           <update_rate>0.5</update_rate>
           <contact>
@@ -125,19 +126,19 @@
           </contact>
       </sensor>
       <material>Gazebo/Red</material>
-    </gazebo>
+    </gazebo> -->
 
     <!-- make two fingers -->
     <xacro:finger suffix="1" />
     <xacro:finger suffix="2" />
 
 
-    <!-- Join sensor to pad-->
+    <!-- Join sensor to pad
     <joint name="sensor1_to_pad1" type="fixed">
       <parent link="pad1" />
       <child link = "contact_sensor_link" />
       <origin xyz="0.01 0 0.005" rpy="0 0 0"/>
-    </joint>
+    </joint> -->
 
 
 
