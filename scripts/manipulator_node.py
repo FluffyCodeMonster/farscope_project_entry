@@ -82,7 +82,6 @@ class Manipulator:
 
         # Move base back to avoid collision
         self.base_driver.move(-0.35, 0, 0, 2)
-        self.base_driver.move(0, 0.025, 0, 2)    # Move to the left slightly
 
         # Unfold wrist
         self.arm_mover.move(wrist_2_cmd=1.6)
@@ -167,7 +166,7 @@ class Manipulator:
 
         # Move the base on the x plane by the float specified
         # Movement timed for 2 secs with 0 rotation
-        self.base_driver.move(movement, 0, 0, 2)
+        self.base_driver.move(0, movement, 0, 2)
         # Publish that base has been adjusted
         self.arm_log("BASE ADJUSTED")
 
