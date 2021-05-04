@@ -15,10 +15,14 @@ from std_msgs.msg import Empty, String
 class RequestListener (threading.Thread):
     def __init__(self, request_name, ros_topic, ros_type, callback_function):
         threading.Thread.__init__(self)
+        self._request_name = request_name
+        self._ros_topic = ros_topic
+        self._ros_type = ros_type
+        self._callback_function = callback_function
     
     def run(self):
-        print('Starting request listener thread: {}'.format(request_name))
-        request_sub = rospy.Subscriber(ros_topic, ros_type, callback_function)
+        print('Starting request listener thread: {}'.format(self._request_name))
+        request_sub = rospy.Subscriber(self._ros_topic, self._ros_type, self._callback_function)
 
 def on_image(image):
     global image_requested_from_detector
