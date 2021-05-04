@@ -1,4 +1,4 @@
-# #!/usr/bin/env python
+#!/usr/bin/env python
 # SA and FT, 4/5/21
 # Automate scouting process
 
