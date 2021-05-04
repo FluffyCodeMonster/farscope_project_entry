@@ -14,7 +14,7 @@ debug_output = True
 wait_time = 2.0
 
 class Phases(enum.Enum):
-    INIT
+    INITIAL
     SCOUTING
     COMPLETE
 
@@ -32,7 +32,7 @@ def wait_for_start(msg_string):
         move_request_pub.publish(scout_pose)
 
 def move_confirmed(msg_string):
-    if (phase == INIT):
+    if (phase == INITIAL):
         if (msg_string.data == "OK MOVE"):
             phase = SCOUTING
             # Request first image
@@ -70,7 +70,7 @@ def image_taken(msg_string):
         turn_request_pub.publish(10)
 
 
-phase = INIT
+phase = INITIAL
 rotation_counter = 0
 
 # Receive a request to begin scouting process.
