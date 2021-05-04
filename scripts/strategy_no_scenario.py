@@ -141,7 +141,7 @@ class Strategy:
         for trophy in trophy_list.values():
             shelf = trophy[0]
             level = trophy[1]
-            pos = self.shelf_width - trophy[2]
+            pos = trophy[2] - (self.shelf_width / 2)
             coord = trophy[3]
             new = True
             for i, t in enumerate(old_trophy_list):
@@ -200,7 +200,7 @@ class Strategy:
             self.gripper_adjustment()
 
     def gripper_adjustment(self):
-        self.rate.sleep()
+        rate = rospy.Rate(0.2)
         for trophy in self.trophy_list:
             if trophy.trophy_id == self.trophy_goal.trophy_id:
                 self.pub_update.publish(Float32(trophy.w))
