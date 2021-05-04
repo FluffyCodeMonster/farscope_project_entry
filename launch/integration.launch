@@ -45,6 +45,7 @@
   <node name="image_forwarder" pkg="farscope_project_entry" type="image_forwarder.py" output="screen"/>
   <node name="trophy_clusterer" pkg="farscope_project_entry" type="trophy_clusterer.py" output="screen"/>
   <node name="trophy_projector" pkg="farscope_project_entry" type="trophy_projector.py" output="screen" args="$(arg t)"/>
+  <node name="scouting" pkg="farscope_project_entry" type="scouting.py" output="screen">
 
   <!-- Map server provided map source -->
   <arg name="map_file" default="$(find farscope_project_entry)/maps/sim_map.yaml"/>
