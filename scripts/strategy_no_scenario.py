@@ -47,7 +47,7 @@ class Strategy:
 
         # List of all Trophies, Constantly Updated
         self.trophy_list = []
-        self.trophy_map = None
+        self.trophy_map = self.trophy_map = np.zeros((4, 8))
         self.neighbor_score_mask = data["neighbor_score_mask"]
         self.trophy_goal = None
 
