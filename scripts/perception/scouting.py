@@ -3,7 +3,7 @@
 # Automate scouting process
 
 import rospy
-from geometry_msgs.msg import Pose, Quaternion
+from geometry_msgs.msg import Point, Pose, Quaternion
 from std_msgs.msg import String, Int16
 import enum
 import numpy as np
