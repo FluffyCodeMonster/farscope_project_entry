@@ -14,9 +14,9 @@ debug_output = True
 wait_time = 2.0
 
 class Phases(enum.Enum):
-    INITIAL
-    SCOUTING
-    COMPLETE
+    INITIAL = 1
+    SCOUTING = 2
+    COMPLETE = 3
 
 def euler_to_quaternion(roll, pitch, yaw):
     qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
@@ -32,14 +32,14 @@ def wait_for_start(msg_string):
         move_request_pub.publish(scout_pose)
 
 def move_confirmed(msg_string):
-    if (phase == INITIAL):
+    if (phase == Phases.INITIAL):
         if (msg_string.data == "OK MOVE"):
-            phase = SCOUTING
+            phase = Phases.SCOUTING
             # Request first image
             image_request_pub.publish("Image_request")
         else:
             strat_notifier.publish("BAD scouting")
-    elif (phase == SCOUTING) and (msg_string.data == "OK ROTATE"):
+    elif (phase == Phases.SCOUTING) and (msg_string.data == "OK ROTATE"):
         # A rotation has been completed.
         rotation_counter += 1
 
@@ -51,7 +51,7 @@ def move_confirmed(msg_string):
         if (rotation_counter == 12):
             if (debug_output):
                 print("Rotation complete")
-            phase = COMPLETE
+            phase = Phases.COMPLETE
             # Publish that scouting is complete.
             strat_notifier.publish("completed scouting")
             # TODO Is there any way to shut this node down?
@@ -70,7 +70,7 @@ def image_taken(msg_string):
         turn_request_pub.publish(10)
 
 
-phase = INITIAL
+phase = Phases.INITIAL
 rotation_counter = 0
 
 # Receive a request to begin scouting process.
