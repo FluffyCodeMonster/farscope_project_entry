@@ -62,7 +62,7 @@ def on_estimates(centre_estimates):
 
     
 
-    pub.publish(String())
+    pub.publish(String(final_dict))
 
     
 #converts dict into string
