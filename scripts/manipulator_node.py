@@ -46,8 +46,8 @@ class Manipulator:
             "/arm_cmd", Int16, self.shelf_selection)
         self.gripper_cmd = rospy.Subscriber(
             "/gripper_cmd", String, self.selection)
-        self.perception_adjustment = rospy.Subscriber(
-            "/perception_adjust", Float32)
+        # self.perception_adjustment = rospy.Subscriber(
+        #    "/perception_adjust", Float32)
 
         # Log info
         self.arm_log("Initialising Manipulator node")
@@ -166,6 +166,8 @@ class Manipulator:
     def adjust(self):
         # Wait for message from perception team
         movement = rospy.wait_for_message("/perception_adjust", Float32)
+
+        # PROCESS THIS INCOMING DATA?
 
         # Move the base on the x plane by the float specified
         # Movement timed for 2 secs with 0 rotation
