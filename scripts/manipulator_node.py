@@ -80,7 +80,7 @@ class Manipulator:
     def arm_to_shelf(self):
 
         # Move base back to avoid collision
-        self.base_driver.move(-0.35, 0, 0, 2)
+        self.base_driver.move(-0.30, 0, 0, 2)
 
         # Unfold wrist
         self.arm_mover.move(wrist_2_cmd=1.6)
@@ -96,11 +96,11 @@ class Manipulator:
 
     # Function moves arm into a position for transit
     # Camera currently facing forwards
-
     def fold_arm(self):
         self.arm_log("FOLDING ARM")
+        # To prevent trophy slip we need to segment the arm movement to keep it level
         self.arm_mover.move(shoulder_lift_cmd_in=-2.40,
-                            elbow_cmd_in=2.4, wrist_2_cmd=3.14)
+                            elbow_cmd_in=2.4, wrist_2_cmd=3.14, duration_in=15)
         self.arm_log("ARM FOLDED")
 
     # Function to unfold the arm for deposit
@@ -126,11 +126,16 @@ class Manipulator:
         self.arm_status.publish(message)
 
     # Function to continue gripping task
-
     def adjust_and_grip(self, msg):
+        # Take data from message
+        movement = msg.data
         # Adjust in the x plane before moving into shelf
+<<<<<<< HEAD
+        self.base_driver.move(0, (movement*0.5), 0, 2)
+=======
         data = msg.data
         self.base_driver.move(0, data, 0, 2)
+>>>>>>> 9c9ce384e3ce5fed603773f645a2599891637d19
         self.arm_log("BASE ADJUSTED")
 
         # Move robot into shelf to grab object
