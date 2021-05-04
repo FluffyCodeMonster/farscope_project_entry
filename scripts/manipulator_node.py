@@ -128,8 +128,10 @@ class Manipulator:
     # Function to continue gripping task
 
     def adjust_and_grip(self, msg):
+        # Take data from message
+        movement = msg.data
         # Adjust in the x plane before moving into shelf
-        self.base_driver(0, msg, 0, 2)
+        self.base_driver(0, movement, 0, 2)
         self.arm_log("BASE ADJUSTED")
 
         # Move robot into shelf to grab object
