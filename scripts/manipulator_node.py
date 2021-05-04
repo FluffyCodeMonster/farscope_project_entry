@@ -64,8 +64,6 @@ class Manipulator:
 
         elif command == "fold":
             self.fold_arm()
-            # self.gripper_result.publish(True)
-            self.arm_log("ARM FOLDED")
 
         else:
             self.arm_log("READY")
