@@ -192,6 +192,10 @@ class Strategy:
                 self.go_scouting()
             elif self.phase == 0:
                 self.phase = 1
+                for i, trophy in enumerate(self.trophy_list):
+                    if trophy.trophy_id == self.trophy_goal.trophy_id:
+                        del self.trophy_list[i]
+                self.trophy_goal = None
                 self.return_base()
             elif self.phase == 1:
                 self.phase = 0
@@ -200,7 +204,6 @@ class Strategy:
             self.gripper_adjustment()
 
     def gripper_adjustment(self):
-        rate = rospy.Rate(0.2)
         for trophy in self.trophy_list:
             if trophy.trophy_id == self.trophy_goal.trophy_id:
                 self.pub_update.publish(Float32(trophy.w))

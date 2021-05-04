@@ -64,7 +64,7 @@ class Manipulator:
             self.deposit()
 
         elif command == "fold":
-            self.fold_arm()
+            self.fold_arm(3)
 
         else:
             self.arm_log("READY")
@@ -96,11 +96,11 @@ class Manipulator:
 
     # Function moves arm into a position for transit
     # Camera currently facing forwards
-    def fold_arm(self):
+    def fold_arm(self, timing):
         self.arm_log("FOLDING ARM")
         # To prevent trophy slip we need to segment the arm movement to keep it level
         self.arm_mover.move(shoulder_lift_cmd_in=-2.40,
-                            elbow_cmd_in=2.4, wrist_2_cmd=3.14, duration_in=15)
+                            elbow_cmd_in=2.4, wrist_2_cmd=3.14, duration_in=timing)
         self.arm_log("ARM FOLDED")
 
     # Function to unfold the arm for deposit
@@ -118,7 +118,7 @@ class Manipulator:
         self.arm_log("ITEM DEPOSITED")
         # Send message to strategy team to indicate deposit
         self.gripper_result.publish(False)
-        self.fold_arm()
+        self.fold_arm(3)
 
     # Function logs the string input to rosout & /arm_status
     def arm_log(self, message):
@@ -138,7 +138,7 @@ class Manipulator:
         # THIS NEEDS WORK
         # Current base movements are taken form Arthurs example
         self.base_driver.move(0.2, -0.0)
-        self.base_driver.move(0.1, -0.00)
+        self.base_driver.move(0.15, -0.00)
         self.arm_log("GRIPPING")
 
         # Grip object
@@ -156,7 +156,7 @@ class Manipulator:
         # Back out of shelf
         self.base_driver.move(-0.3, 0, 0, 2)
 
-        self.fold_arm()
+        self.fold_arm(15)
 
         # Send message to strategy team to indicate success
         self.gripper_result.publish(True)
