@@ -41,9 +41,11 @@ def wait_for_start(msg_string):
         if debug_output:
             print("Scouting: starting...")
 
+
 def move_confirmed(msg_string):
     global phase
-    
+    global rotation_counter
+
     if (phase == Phases.INITIAL):
         if (msg_string.data == "OK MOVE"):
             phase = Phases.SCOUTING
@@ -54,13 +56,14 @@ def move_confirmed(msg_string):
     elif (phase == Phases.SCOUTING) and (msg_string.data == "OK ROTATE"):
         # A rotation has been completed.
         rotation_counter += 1
+        print(rotation_counter)  # Debug
 
         if (debug_output):
             print("One 30d rotation complete")
 
-        rospy.sleep(wait_time)
+        # rospy.sleep(wait_time) # Commented out cause idk
 
-        if (rotation_counter == 12):
+        if (rotation_counter == 24):
             if (debug_output):
                 print("Rotation complete")
             phase = Phases.COMPLETE
@@ -94,7 +97,7 @@ scout_start = rospy.Subscriber(
     "/base_cntrl/in_cmd", String, wait_for_start, queue_size=1)
 
 move_request_pub = rospy.Publisher("/base_cntrl/go_to_pose/", Pose)
-turn_request_pub = rospy.Publisher("/base_ctrl/rotate_deg", Int16)
+turn_request_pub = rospy.Publisher("/base_cntrl/rotate_deg", Int16)
 movement_confirmation = rospy.Subscriber(
     "/base_cntrl/out_result", String, move_confirmed, queue_size=1)
 # For communicating end of scouting to Strategy.
