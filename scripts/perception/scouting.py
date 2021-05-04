@@ -31,6 +31,9 @@ def wait_for_start(msg_string):
         scout_pose = Pose(Point(-0.5, -2.0, 0.0), euler_to_quaternion(0,0,0))
         move_request_pub.publish(scout_pose)
 
+        if debug_output:
+            print("Scouting: starting...")
+
 def move_confirmed(msg_string):
     if (phase == Phases.INITIAL):
         if (msg_string.data == "OK MOVE"):
@@ -88,7 +91,10 @@ image_request_pub = rospy.Publisher("/trophy_image_robot_request_response", Stri
 image_confirmation = rospy.Subscriber("/trophy_image_robot_request_response", String, image_taken, queue_size = 1)
 
 # TODO Does it slow things down to put a 'sleep' here?
-rospy.sleep(1.0)
+# rospy.sleep(1.0)
+
+if (debug_output):
+    print("Scouting: waiting to start...")
 
 while not rospy.is_shutdown():
     rospy.spin()
