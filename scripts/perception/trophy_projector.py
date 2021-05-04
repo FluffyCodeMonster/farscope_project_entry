@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Trophy projection node
 
 '''
@@ -23,7 +24,7 @@ Dawood's code:
 
 '''
 Stages of work for prototype:
- o S1: Single plane (e.g. y axis in map frame).
+ o S1: Single plane (e.g. y axis in odom frame).
    Requires:
       - TF
       - Projection system
@@ -93,7 +94,7 @@ class ProjectionPlane:
             # TODO How to handle if this intersection doesn't exist - e.g. parallel lines?
             dist = (np.dot((self.p - ray_origin_vec), self.n)) / np.dot(ray_dir_vec, self.n)
 
-            # Find the position of intersection in 3D space (in the map frame).
+            # Find the position of intersection in 3D space (in the odom frame).
             intersect_coord = ray_origin_vec + dist*ray_dir_vec
         except Exception as error:
             # TODO Need to handle this error properly. Also, should it be error.message?
@@ -123,7 +124,8 @@ def dir_vec_from_image(image_dims, centre):
     # CAUTION: image_dims = (height, width) - not the way round you'd expect!
     image_height = image_dims[0]
     image_width = image_dims[1]
-    image_centrepoint = (round(float(image_width) / 2), round(float(image_height) / 2))
+    ####image_centrepoint = (round(float(image_width) / 2), round(float(image_height) / 2))
+    image_centrepoint = (float(image_width) / 2, float(image_height) / 2)
 
     # Define +ve to right, +ve upwards.
     # (0,0) is at the top-left of the images.
@@ -138,16 +140,17 @@ def dir_vec_from_image(image_dims, centre):
 
     # Work out angle. Camera has no distortion (see the file TODO [complete this]), so this is a linear interpolation.
     # image_dims = (height, width)
-    x_angle = ( x_disp / image_width ) * CAM_FOV_RADIANS
-    y_angle = ( y_disp / image_height ) * CAM_FOV_RADIANS
+    ####x_angle = ( x_disp / image_width ) * CAM_FOV_RADIANS
+    ####y_angle = ( y_disp / image_height ) * CAM_FOV_RADIANS
     ##x_angle = math.atan(x_disp / focal_distance)
     ##y_angle = math.atan(y_disp / focal_distance)
 
     # Assemble into a unit vector.
     # Angles in radians.
     # -1 for y coordinate because of ROS RH frame coordinate system.
-    projn_vec_cam_frame = np.array([1, -1*math.tan(x_angle), math.tan(y_angle)])
-    print("x angle: {}, y angle: {}".format(x_angle, y_angle))
+    ####projn_vec_cam_frame = np.array([1, -1*math.tan(x_angle), math.tan(y_angle)])
+    projn_vec_cam_frame = np.array([FOCAL_LENGTH, x_disp, y_disp])
+    ####print("x angle: {}, y angle: {}".format(x_angle, y_angle))
     # Normalise
     projn_vec_cam_frame = projn_vec_cam_frame / np.linalg.norm(projn_vec_cam_frame)
 
@@ -176,10 +179,10 @@ def get_cam_posn(time):
         # Times out after 1 second. What happens if the buffer doesn't contain the
         # transformation after this duration? [I think it throws an error]
         # --> Even works with a duration of 0.001 - how does this work? TODO
-        cam_in_map = tf_buffer.transform(cam_origin, 'map', rospy.Duration(1))
+        cam_in_odom = tf_buffer.transform(cam_origin, 'odom', rospy.Duration(1))
         print("Performed transform")
 
-        cam_posn_vec = np.array([cam_in_map.point.x, cam_in_map.point.y, cam_in_map.point.z])
+        cam_posn_vec = np.array([cam_in_odom.point.x, cam_in_odom.point.y, cam_in_odom.point.z])
 
         success = True
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
@@ -199,8 +202,8 @@ def get_projn_vector(time, projn_vec_cam_frame, cam_origin):
 
     # We consider a unit projection vector in the camera1_lens frame
     # (position vector in direction of trophy from camera1_lens origin, of length one),
-    # transform it into the map frame, and then subtract off the position of
-    # the camera to get the projection vector in the map frame.
+    # transform it into the odom frame, and then subtract off the position of
+    # the camera to get the projection vector in the odom frame.
 
     # Projection vector in camera1_lens frame.
     projn_vec_cam_frame_point = PointStamped()
@@ -209,7 +212,7 @@ def get_projn_vector(time, projn_vec_cam_frame, cam_origin):
     projn_vec_cam_frame_point.header.frame_id = 'camera1_lens'
     projn_vec_cam_frame_point.point.x = projn_vec_cam_frame[0]
     # y -ve because left handed coordinate frame.
-    projn_vec_cam_frame_point.point.y = projn_vec_cam_frame[1]
+    projn_vec_cam_frame_point.point.y = -1 * projn_vec_cam_frame[1]
     projn_vec_cam_frame_point.point.z = projn_vec_cam_frame[2]
 
     try:
@@ -219,10 +222,10 @@ def get_projn_vector(time, projn_vec_cam_frame, cam_origin):
         # Times out after 1 second. What happens if the buffer doesn't contain the
         # transformation after this duration? [I think it throws an error]
         # --> Even works with a duration of 0.001 - how does this work? TODO
-        projn_vec_map_frame_point = tf_buffer.transform(projn_vec_cam_frame_point, 'map', rospy.Duration(1))
+        projn_vec_odom_frame_point = tf_buffer.transform(projn_vec_cam_frame_point, 'odom', rospy.Duration(1))
         print("Performed transform")
 
-        projn_vec_map = np.array([projn_vec_map_frame_point.point.x, projn_vec_map_frame_point.point.y, projn_vec_map_frame_point.point.z])
+        projn_vec_odom = np.array([projn_vec_odom_frame_point.point.x, projn_vec_odom_frame_point.point.y, projn_vec_odom_frame_point.point.z])
 
         success = True
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
@@ -231,8 +234,8 @@ def get_projn_vector(time, projn_vec_cam_frame, cam_origin):
         print("Transform error ~ it's likely that the picture time predates the tf transform buffer. Image ignored.")
         print("   Message:: {}".format(e))
     
-    # Get position vector in map frame by subtracting off position of camera in map frame.
-    projn_vec = projn_vec_map - cam_origin
+    # Get position vector in odom frame by subtracting off position of camera in odom frame.
+    projn_vec = projn_vec_odom - cam_origin
 
     # 'Projection ray' direction as a numpy 3-vector.
     return [success, projn_vec]
@@ -242,12 +245,14 @@ def on_centres(centres_msg):
 
     [image_time, image_dims, centres] = parse_centres_string(centres_msg.data)
 
+    print(" ************************************************** Stamp [projector]:: {}".format(image_time))
+
     # Testing
     # print(image_time)
     # print(centres)
     trophy_coords = []
     
-    # Get camera position in 'map' frame, as well as frame orientation (i.e. direction vector through (1,0,0)
+    # Get camera position in 'odom' frame, as well as frame orientation (i.e. direction vector through (1,0,0)
     # from the camera1 lens), both as numpy 3d-vectors.
     # cam_posn_transform_success
     [success, cam_coord] = get_cam_posn(image_time)
@@ -260,10 +265,10 @@ def on_centres(centres_msg):
             print("Projecting centre")
             # Get projection vector in camera lens frame.
             projn_vec_in_cam_frame = dir_vec_from_image(image_dims, centre)
-            # Convert into a projection direction in the map frame.
+            # Convert into a projection direction in the odom frame.
             # projn_vec_transform_success
             [success, projection_line_dir] = get_projn_vector(image_time, projn_vec_in_cam_frame, cam_coord)
-            print("Projn vector in map frame: {}".format(projection_line_dir))
+            print("Projn vector in odom frame: {}".format(projection_line_dir))
             
             if success:
                 # Iterate through planes and perform projections.
@@ -368,9 +373,10 @@ else:
 
 rospy.init_node('trophy_projector')
 
-######### Set up global variables and constants #########
+######### <globals> Set up global variables and constants #########
 
 CAM_FOV_RADIANS = 1.3962634 # camera1 field of view
+FOCAL_LENGTH = 476.7030836014194 # camera1 focal length (in both x- and y- directions)
 
 # Set up planes (TODO read coordinates from file?):
 # List of projection planes.
@@ -404,7 +410,7 @@ trophy_coords = []
 
 if testing:
     point_cloud = PointCloud()
-    point_cloud.header.frame_id = "map"
+    point_cloud.header.frame_id = "odom"
     point_cloud.points = []
     point_cloud.channels = []
 
@@ -412,10 +418,10 @@ if testing:
 tf_buffer = tf2_ros.Buffer()
 listener = tf2_ros.TransformListener(tf_buffer)
 
-#########################################################
+######### </globals> ################################################
 
 # TODO Need to define the correct message types for Msg1 and Msg2.
-# Message coming from trophy detector. Will need:
+# Message coming from trophy_detector. Will need:
 # {(Camera pose, coordinates in frame (x, y)), ...}
 # TODO Currently reading in as a string, but this is only a temporary solution.
 coord_sub = rospy.Subscriber("detected_trophy_centres", String, on_centres)

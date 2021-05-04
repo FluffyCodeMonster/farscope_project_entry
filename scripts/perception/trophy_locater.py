@@ -90,4 +90,3 @@ def where_are_these_trophies(trophy_coord_list):
         result.append(where_is_this_trophy(tc))
     
     return result
-

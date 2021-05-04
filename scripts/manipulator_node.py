@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 import rospy
-from farscope_group_project.farscope_robot_utils import ArmMover, GripperController, BaseDriver
-from std_msgs.msg import Bool, String, Int16
+from farscope_project_entry.farscope_robot_utils import ArmMover, GripperController, BaseDriver
+from std_msgs.msg import Bool, String, Int16, Float32
 
 # Create class for the manipulator
+
+
 class Manipulator:
     def __init__(self):
         # Initialise node
@@ -17,9 +19,14 @@ class Manipulator:
         #   "OBJECT GRIPPED"
         #   "MOVING OUT SHELF"
         #   "READY TO MOVE"
-        #   
-        self.arm_status = rospy.Publisher("/manipulator/arm_status", String, queue_size=3)
-        self.gripper_result = rospy.Publisher("/manipulator/gripper_result", Bool, queue_size=3)
+        #   "ITEM DEPOSITED"
+        #   "UNFOLDING"
+        #   "ARM FOLDED"
+        #   "READY TO MOVE"
+        self.arm_status = rospy.Publisher(
+            "/manipulator/arm_status", String, queue_size=3)
+        self.gripper_result = rospy.Publisher(
+            "/manipulator/gripper_result", Bool, queue_size=3)
 
         # Create controller objects for base, gripper and base
         self.arm_mover = ArmMover()
@@ -31,29 +38,37 @@ class Manipulator:
 
         # Publish to topics to indicate status
         # Publishing to the topics at the start of the script may not publish correctly
-        self.gripper_result.publish("null")
+        # self.gripper_result.publish("null")
 
         # Subscribe to topics from the strat team
         # Callback on gripper_cmd
-        self.shelf_sub = rospy.Subscriber("/arm_cmd", Int16, self.shelf_selection)
-        self.gripper_cmd = rospy.Subscriber("/gripper_cmd", String, self.selection)
-        
+        self.shelf_sub = rospy.Subscriber(
+            "/arm_cmd", Int16, self.shelf_selection)
+        self.gripper_cmd = rospy.Subscriber(
+            "/gripper_cmd", String, self.selection)
+        # self.perception_adjustment = rospy.Subscriber(
+        #    "/perception_adjust", Float32)
+
         # Log info
         self.arm_log("Initialising Manipulator node")
-    
+
         self.taget_shelf = 0
 
     # Selection function takes input from strategy and choose a routine to run
     def selection(self, msg):
         command = msg.data
 
-        rospy.loginfo("Command = %s",command)   # Debug
+        rospy.loginfo("Command = %s", command)   # Debug
 
         if command == "grip":
             self.pickup_routine()
 
         elif command == "deposit":
             self.deposit()
+
+        elif command == "fold":
+            self.fold_arm()
+            self.gripper_result.publish(True)
 
         else:
             self.arm_log("READY")
@@ -64,30 +79,35 @@ class Manipulator:
 
         rospy.loginfo("Target Shelf = " + str(self.taget_shelf))   # Debug
 
-
-
     # Function runs a apickup routine @ a certain shelf height
+
     def pickup_routine(self):
+
+        # Move base back to avoid collision
+        self.base_driver.move(-0.35, 0, 0, 2)
+        self.base_driver.move(0, 0.025, 0, 2)    # Move to the left slightly
+
         # Unfold wrist
-        self.arm_mover.move(wrist_2_cmd = 1.6)
+        self.arm_mover.move(wrist_2_cmd=1.6)
 
         # Publish status as we go "/arm_status"
         self.arm_log("STARTING GRIP")
 
         # Move arm to intended height
-        self.arm_mover.move(shoulder_lift_cmd_in = self.shoulder_heights[self.taget_shelf], elbow_cmd_in=1.0, wrist_2_cmd = 1.6)
+        self.arm_mover.move(
+            shoulder_lift_cmd_in=self.shoulder_heights[self.taget_shelf], elbow_cmd_in=1.0, wrist_2_cmd=1.6)
 
         self.arm_log("ARM @ SHELF " + str(self.taget_shelf))
-        self.arm_log("MOVING INTO SHELF")
+
+        # Short pause to wait for adjustments from perception
+        self.adjust()
 
         # Move robot into shelf to grab object
+        self.arm_log("MOVING INTO SHELF")
         # THIS NEEDS WORK
         # Current base movements are taken form Arthurs example
-        self.base_driver.move(0.3, -0.0)
-        #base_driver.move(0.3, -0.1)
-        self.base_driver.move(0.3, -0.00)
-        #base_driver.move(0.3, -0.05)
-
+        self.base_driver.move(0.2, -0.0)
+        self.base_driver.move(0.1, -0.00)
         self.arm_log("GRIPPING")
 
         # Grip object
@@ -97,7 +117,8 @@ class Manipulator:
         self.arm_log("OBJECT GRIPPED")
 
         # Slight lift off the shelf
-        self.arm_mover.move(shoulder_lift_cmd_in=(self.shoulder_heights[self.taget_shelf]-0.05), elbow_cmd_in=1.0, wrist_2_cmd = 1.6)
+        self.arm_mover.move(shoulder_lift_cmd_in=(
+            self.shoulder_heights[self.taget_shelf]-0.05), elbow_cmd_in=1.0, wrist_2_cmd=1.6)
 
         self.arm_log("MOVING OUT SHELF")
 
@@ -109,18 +130,20 @@ class Manipulator:
         # Send message to strategy team to indicate success
         self.gripper_result.publish(True)
 
-
     # Function moves arm into a position for transit
     # Camera currently facing forwards
+
     def fold_arm(self):
         self.arm_log("FOLDING ARM")
-        self.arm_mover.move(shoulder_lift_cmd_in = -2.40, elbow_cmd_in = 2.4, wrist_2_cmd = 3.14)
+        self.arm_mover.move(shoulder_lift_cmd_in=-2.40,
+                            elbow_cmd_in=2.4, wrist_2_cmd=3.14)
         self.arm_log("ARM FOLDED")
 
     # Function to unfold the arm for deposit
     def unfold_arm(self):
         self.arm_log("UNFOLDING ARM")
-        self.arm_mover.move(shoulder_lift_cmd_in = 0, elbow_cmd_in = 0, wrist_2_cmd = 1.6)
+        self.arm_mover.move(shoulder_lift_cmd_in=0,
+                            elbow_cmd_in=0, wrist_2_cmd=1.6)
         self.arm_log("ARM UNFOLDED")
 
     # Function for the deposit routine
@@ -129,7 +152,8 @@ class Manipulator:
         self.unfold_arm()
         self.gripper_controller.open()
         self.arm_log("ITEM DEPOSITED")
-        self.gripper_result.publish(False)   # Send message to strategy team to indicate deposit
+        # Send message to strategy team to indicate deposit
+        self.gripper_result.publish(False)
         self.fold_arm()
 
     # Function logs the string input to rosout & /arm_status
@@ -137,6 +161,19 @@ class Manipulator:
         rospy.loginfo(message)
         self.arm_status.publish(message)
 
+    # Function to make small adjustments to the base position from perception advice
+
+    def adjust(self):
+        # Wait for message from perception team
+        movement = rospy.wait_for_message("/perception_adjust", Float32)
+
+        # PROCESS THIS INCOMING DATA?
+
+        # Move the base on the x plane by the float specified
+        # Movement timed for 2 secs with 0 rotation
+        self.base_driver.move(movement, 0, 0, 2)
+        # Publish that base has been adjusted
+        self.arm_log("BASE ADJUSTED")
 
 
 # Main function of script
