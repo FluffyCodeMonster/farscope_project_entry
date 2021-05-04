@@ -101,6 +101,7 @@ class Manipulator:
         # To prevent trophy slip we need to segment the arm movement to keep it level
         self.arm_mover.move(shoulder_lift_cmd_in=-2.40,
                             elbow_cmd_in=2.4, wrist_2_cmd=3.14, duration_in=timing)
+        self.arm_log("ARM FOLDED")
 
     # Function to unfold the arm for deposit
 
