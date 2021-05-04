@@ -1,2 +1,3 @@
-
+# Ignore trophy detector weights file for now - too large to push to Github.
+/scripts/perception/trophy_detector/yolov3.weights
 

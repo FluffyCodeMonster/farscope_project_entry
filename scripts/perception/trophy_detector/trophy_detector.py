@@ -152,12 +152,12 @@ if '-h' in sys.argv:
     print()
     print("Usage:")
     print()
-    print("   python3 trophy_detector.py  class_names_path  cfg_path  weights_path")
+    print("   python3 trophy_detector.py  <class_names_path>  <cfg_path>  <weights_path>")
     print()
     print("To also publish the images from the camera with trophy bounding boxes, start the detector with")
     print()
     # TODO Should this be 'python3'?
-    print("   python3 trophy_detector.py  class_names_path  cfg_path  weights_path")
+    print("   python3 trophy_detector.py  <class_names_path>  <cfg_path>  <weights_path> -i")
     print()
     print("Output images with detected trophies labelled (with bounding boxes) will be published to the topic '/image_trophies_detected'.")
     print()
@@ -177,7 +177,7 @@ else:
 class_names_path = sys.argv[1]
 cfg_path = sys.argv[2]
 weights_path = sys.argv[3]
-if (len(sys.argv) == 5) and (sys.argv[4] == '-i'):
+if (len(sys.argv) >= 5) and (sys.argv[4] == '-i'):
     # bbs = bounding boxes
     publish_images_with_bbs = True
     print()
