@@ -42,6 +42,8 @@ def wait_for_start(msg_string):
             print("Scouting: starting...")
 
 def move_confirmed(msg_string):
+    global phase
+    
     if (phase == Phases.INITIAL):
         if (msg_string.data == "OK MOVE"):
             phase = Phases.SCOUTING
