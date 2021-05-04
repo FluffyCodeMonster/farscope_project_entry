@@ -13,12 +13,12 @@ from std_msgs.msg import Empty, String
 # to a race condition s.t. a request is missed?
 
 class RequestListener (threading.Thread):
-    def __init__(self, request_name, ros_topic, ros_type, callback_function):
+    def __init__(self, request_name_arg, ros_topic_arg, ros_type_arg, callback_function_arg):
         threading.Thread.__init__(self)
-        self._request_name = request_name
-        self._ros_topic = ros_topic
-        self._ros_type = ros_type
-        self._callback_function = callback_function
+        self._request_name = request_name_arg
+        self._ros_topic = ros_topic_arg
+        self._ros_type = ros_type_arg
+        self._callback_function = callback_function_arg
     
     def run(self):
         print('Starting request listener thread: {}'.format(self._request_name))
