@@ -168,6 +168,7 @@ class Strategy:
                     w=pos
                 )
                 self.trophy_list.append(new_trophy)
+        self.trophy_list = sorted(self.trophy_list, key=lambda x: (x.level, x.shelf))
         self.update_trophy_map()
         if self.mode == 1:
             self.mode = 0
