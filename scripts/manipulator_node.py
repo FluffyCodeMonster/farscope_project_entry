@@ -34,8 +34,8 @@ class Manipulator:
         self.gripper_controller = GripperController()
 
         # Hardcoded shelf height angles
-        self.shoulder_heights = [0.15, -0.55, -1.0, -1.0]
-        self.elbow_heights = [1, 1.65, 1.85, 1]
+        self.shoulder_heights = [0.15, -0.5, -1.0, -1.0]
+        self.elbow_heights = [1, 1.8, 1.85, 1]
 
         # Subscribe to topics from the strat team
         # Callbacks on messages recieved
@@ -154,7 +154,7 @@ class Manipulator:
             self.base_driver.move(0.2, -0.0)
         elif self.target_shelf == 1:    # This seems good @ 0.2, 0.175  - May need changing after altering angles
             self.base_driver.move(0.2, -0.0)
-            self.base_driver.move(0.175, -0.0)
+            self.base_driver.move(0.185, -0.0)
         elif self.target_shelf == 2:    # This seems good
             self.base_driver.move(0.2, -0.0)
             self.base_driver.move(0.25, -0.00)
