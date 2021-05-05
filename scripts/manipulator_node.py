@@ -86,7 +86,7 @@ class Manipulator:
         self.base_driver.move(-0.325, 0, 0, 2)
 
         # Unfold wrist
-        self.arm_mover.move(wrist_2_cmd=1.6)
+        # self.arm_mover.move(wrist_2_cmd=1.6)
 
         # Publish status as we go "/arm_status"
         self.arm_log("STARTING GRIP")
@@ -140,7 +140,7 @@ class Manipulator:
 
         self.gripper_controller.open()
         # Adjust in the x plane before moving into shelf
-        self.base_driver.move(0, (movement*0.44), 0, 2)    # (movement*0.25)
+        self.base_driver.move(0, -(movement*0.44), 0, 2)    # (movement*0.25)
 
         self.arm_log("BASE ADJUSTED")
 
