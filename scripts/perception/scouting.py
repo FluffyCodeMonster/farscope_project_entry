@@ -18,7 +18,7 @@ wait_time = 0.5
 # Allows skipping of angles which don't have any shelves.
 #                  30  60  90  120 150 210 240 270 300 330 360
 #rotation_angles = [30, 30, 30, 30, 30, 60, 30, 30, 30, 30, 30]  # Degrees
-rotation_angles = [60, 60, 60, 30, 90, 30]
+rotation_angles = [60, 60, 60, 30, 90, 30, 1]
 
 shutdown = False
 
