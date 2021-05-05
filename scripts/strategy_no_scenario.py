@@ -131,7 +131,7 @@ class Strategy:
         return density
 
     @staticmethod
-    def calculate_difficulty(self, trophy):
+    def calculate_difficulty(trophy):
         # difficulty = (trophy.w / (self.shelf_width / 2)) ** 8
         difficulty = abs(trophy.w)
         return difficulty
