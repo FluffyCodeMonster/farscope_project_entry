@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 
 from std_msgs.msg import String, Float32, Int16, Float32MultiArray, Bool
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist, PointStamped
 import rospy
 import json
 import sys
 import numpy as np
 import copy
 import math
-
-from geometry_msgs.msg import PointStamped
 import tf2_ros
 
 
@@ -258,7 +256,7 @@ class Strategy:
             if trophy.trophy_id == self.trophy_goal.trophy_id:
 
                 # Get position of gripper in odom frame.
-                gripper_x, gripper_y = self.gripper_in_odom()
+                [gripper_x, gripper_y] = self.gripper_in_odom()
 
                 # Subtract away (x,y)-position of trophy.
                 if (trophy.shelf == 1) or (trophy.shelf == 2) or (trophy.shelf == 3) or (trophy.shelf == 7):
@@ -269,12 +267,11 @@ class Strategy:
                     # Take difference in x-direction.
                     diff_left = trophy.x - gripper_x
 
-
                 if diff_left >= 0:
                     self.pub_left.publish(Float32(diff_left))
                 else:
                     self.pub_right.publish(Float32(-1 * diff_left))
-    
+
     # Helper method for gripper_adjustment.
     def gripper_in_odom(self):
         success = False
@@ -297,7 +294,8 @@ class Strategy:
             # Times out after 1 second. What happens if the buffer doesn't contain the
             # transformation after this duration? [I think it throws an error]
             # --> Even works with a duration of 0.001 - how does this work? TODO
-            gripper_in_odom = self.tf_buffer.transform(gripper_position, 'odom', rospy.Duration(1))
+            gripper_odom = self.tf_buffer.transform(
+                gripper_position, 'odom', rospy.Duration(1))
             print("Performed transform")
 
             # gripper_posn_vec = np.array(
@@ -309,8 +307,8 @@ class Strategy:
             # TODO Might need to revise this error message now that I've chopped things around.
             print("Transform error ~ it's likely that the picture time predates the tf transform buffer. Image ignored.")
             print("   Message:: {}".format(e))
-        
-        return [gripper_in_odom.point.x, gripper_in_odom.point.y]
+
+        return [gripper_odom.point.x, gripper_odom.point.y]
 
 
 if __name__ == '__main__':
