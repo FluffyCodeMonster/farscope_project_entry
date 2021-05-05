@@ -35,6 +35,7 @@ class Manipulator:
 
         # Hardcoded shelf heights
         self.shoulder_heights = [0.15, -0.25, -0.6, -1.0]
+        self.elbow_heights = [1, 1.5, 1.64, 1]
 
         # Subscribe to topics from the strat team
         # Callbacks on messages recieved
@@ -91,7 +92,7 @@ class Manipulator:
 
         # Move arm to intended height
         self.arm_mover.move(
-            shoulder_lift_cmd_in=self.shoulder_heights[self.taget_shelf], elbow_cmd_in=1.0, wrist_2_cmd=1.6)
+            shoulder_lift_cmd_in=self.shoulder_heights[self.taget_shelf], elbow_cmd_in=self.elbow_heights[self.target_shelf], wrist_2_cmd=1.6)
 
         self.arm_log("ARM @ SHELF")
 
