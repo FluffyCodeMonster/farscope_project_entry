@@ -19,6 +19,9 @@ class Trophy:
         self.level = level
         self.w = w
 
+    def __str__(self):
+        return "id: {}, shelf: {}, level: {}, position: {}".format(self.trophy_id, self.shelf, self.level, self.w)
+
 
 class Strategy:
     def __init__(self, data_file_path):
