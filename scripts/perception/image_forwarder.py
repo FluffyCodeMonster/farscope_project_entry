@@ -22,7 +22,7 @@ class RequestListener (threading.Thread):
     
     def run(self):
         print('Starting request listener thread: {}'.format(self._request_name))
-        request_sub = rospy.Subscriber(self._ros_topic, self._ros_type, self._callback_function)
+        request_sub = rospy.Subscriber(self._ros_topic, self._ros_type, self._callback_function, queue_size = 1)
 
 def on_image(image):
     global image_requested_from_detector

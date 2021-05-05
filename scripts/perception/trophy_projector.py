@@ -426,7 +426,13 @@ listener = tf2_ros.TransformListener(tf_buffer)
 # Message coming from trophy_detector. Will need:
 # {(Camera pose, coordinates in frame (x, y)), ...}
 # TODO Currently reading in as a string, but this is only a temporary solution.
-coord_sub = rospy.Subscriber("detected_trophy_centres", String, on_centres)
+# Queue size of one as this is currently operating on a request-response model - the robot
+# will request that the vision system runs a trophy position estimation process, from image
+# forwarding through to projection, and will block until it receives a message (on the topic 
+# '/trophy_image_robot_request_response') that the projection process is complete. Hence it's fine to have a queue_size of one,
+# since we won't have another request (set of centres) coming in until the projection process
+# has finished.
+coord_sub = rospy.Subscriber("detected_trophy_centres", String, on_centres, queue_size = 1)
 
 if testing:
     # Send point cloud to Rviz.

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import sys, rospy
-# TODO Temp - need a better message format.
 from std_msgs.msg import String
 #from farscope_robot_utils import where_is_this_trophy
 from trophy_locater import where_is_this_trophy, where_are_these_trophies
 import json
+
+
 # Coming from 'trophy_projector.py'
 def parse_input(msg_string):
     # String format:
@@ -39,15 +40,8 @@ def on_estimates(centre_estimates):
 
     final_dict = json_dict(new_dict)
 
-
-
-
     print(final_dict)
     
-
-
-
-
     # Testing
     #print()
     #print(" *** New centres *** ")
@@ -59,46 +53,18 @@ def on_estimates(centre_estimates):
     #print('position: ', pos_on_shelf)
     #print('coords: ',coords)
 
-
-    
-
     pub.publish(String(final_dict))
 
-    
 #converts dict into string
 def json_dict(input_dict):
     dict_string= json.dumps(input_dict, separators = (',', ':'))
     return dict_string
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 rospy.init_node('trophy_clusterer')
 
 rospy.Subscriber('trophy_coord_ests_3d', String, on_estimates)
 
 pub = rospy.Publisher('/trophy_update', String, queue_size = 3)
-
-
-
-
-
-
-
-
-
-
-#rospy.Publisher(...)
 
 while not rospy.is_shutdown():
     rospy.spin()
