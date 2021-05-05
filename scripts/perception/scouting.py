@@ -76,7 +76,10 @@ def move_confirmed(msg_string):
             phase = Phases.COMPLETE
             # Publish that scouting is complete.
             strat_notifier.publish("completed scouting")
-            # TODO Is there any way to shut this node down?
+            # Shutting the node down [else there is erronous behaviour later on,
+            # when subsequent messages are sent on the subscribed topics].
+            # TODO Do we need to shut the publishers and subscribers down cleanly?
+            sys.exit(0)
         else:
             # Request next image.
             if (debug_output):
@@ -92,6 +95,8 @@ def image_taken(msg_string):
             print("Scouting: image confirmation received")
 
         # Request the next rotation (see rotation_angles)
+        if (debug_output):
+            print("################# Scouting:: rotation_index: {}".format(rotation_index))
         turn_request_pub.publish(rotation_angles[rotation_index])
 
 
