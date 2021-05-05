@@ -177,6 +177,8 @@ class Strategy:
         if self.mode == 1:
             self.mode = 0
             self.gripper_adjustment()
+        rospy.loginfo("Updated List")
+        rospy.loginfo(str(self.trophy_list))
 
     def base_in_position(self, msg):
         message = msg.data
@@ -202,6 +204,9 @@ class Strategy:
                 for i, trophy in enumerate(self.trophy_list):
                     if trophy.trophy_id == self.trophy_goal.trophy_id:
                         del self.trophy_list[i]
+                        rospy.loginfo("Deleted trophy from list")
+                rospy.loginfo("Updated trophy list")
+                rospy.loginfo(str(self.trophy_list))
                 self.trophy_goal = None
                 self.return_base()
             elif self.phase == 1:
