@@ -121,6 +121,8 @@ class Manipulator:
         self.arm_log("ITEM DEPOSITED")
         # Send message to strategy team to indicate deposit
         self.gripper_result.publish(False)
+        rospy.sleep(2)
+        self.gripper_controller.close()
         self.fold_arm(3)
 
     # Function logs the string input to rosout & /arm_status
@@ -144,7 +146,7 @@ class Manipulator:
         # THIS NEEDS WORK
         # Current base movements are taken form Arthurs example
         self.base_driver.move(0.2, -0.0)
-        self.base_driver.move(0.15, -0.00)
+        self.base_driver.move(0.13, -0.00)
         self.arm_log("GRIPPING")
 
         # Grip object
