@@ -130,8 +130,10 @@ class Strategy:
             density = np.sum(mask_result)
         return density
 
+    @staticmethod
     def calculate_difficulty(self, trophy):
-        difficulty = (trophy.w / (self.shelf_width / 2)) ** 8
+        # difficulty = (trophy.w / (self.shelf_width / 2)) ** 8
+        difficulty = abs(trophy.w)
         return difficulty
 
     def move_base(self):
