@@ -61,7 +61,7 @@ def move_confirmed(msg_string):
         if (msg_string.data == "OK MOVE"):
             phase = Phases.SCOUTING
             # Request first image
-            image_request_pub.publish("Image_request")
+            image_request_pub.publish("Image_request::camera1")
         else:
             strat_notifier.publish("BAD scouting")
     elif (phase == Phases.SCOUTING) and (msg_string.data == "OK ROTATE"):
