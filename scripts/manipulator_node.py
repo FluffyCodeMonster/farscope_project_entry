@@ -81,7 +81,7 @@ class Manipulator:
     def arm_to_shelf(self):
 
         # Move base back to avoid collision
-        self.base_driver.move(-0.32, 0, 0, 2)
+        self.base_driver.move(-0.35, 0, 0, 2)
 
         # Unfold wrist
         self.arm_mover.move(wrist_2_cmd=1.6)
@@ -116,7 +116,7 @@ class Manipulator:
     # Currently a dummy routine
     def deposit(self):
         self.unfold_arm()
-        rospy.sleep(1)
+        rospy.sleep(3)
         self.gripper_controller.open()
         self.arm_log("ITEM DEPOSITED")
         # Send message to strategy team to indicate deposit
@@ -135,7 +135,7 @@ class Manipulator:
 
         self.gripper_controller.open()
         # Adjust in the x plane before moving into shelf
-        self.base_driver.move(0, (movement*0.5), 0, 2)    # (movement*0.25)
+        self.base_driver.move(0, (movement*0.44), 0, 2)    # (movement*0.25)
 
         self.arm_log("BASE ADJUSTED")
 
