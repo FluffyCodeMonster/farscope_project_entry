@@ -33,9 +33,9 @@ class Manipulator:
         self.base_driver = BaseDriver()
         self.gripper_controller = GripperController()
 
-        # Hardcoded shelf heights
-        self.shoulder_heights = [0.15, -0.25, -0.6, -1.0]
-        self.elbow_heights = [1, 1.5, 1.64, 1]
+        # Hardcoded shelf height angles
+        self.shoulder_heights = [0.15, -0.55, -1.0, -1.0]
+        self.elbow_heights = [1, 1.65, 1.85, 1]
 
         # Subscribe to topics from the strat team
         # Callbacks on messages recieved
@@ -49,8 +49,8 @@ class Manipulator:
         # Log info
         self.arm_log("Initialising Manipulator node")
 
-        self.taget_shelf = 0
-        self.adjust_float = 0
+        self.target_shelf = 0
+        #self.adjust_float = 0
 
     # Selection function takes input from strategy and choose a routine to run
     def selection(self, msg):
@@ -73,16 +73,17 @@ class Manipulator:
 
     # Selection function takes input from strategy and sets the target shelf for the pickup routine
     def shelf_selection(self, msg):
-        self.taget_shelf = msg.data
+        self.target_shelf = msg.data
 
-        rospy.loginfo("Target Shelf = " + str(self.taget_shelf))   # Debug
+        rospy.loginfo("Target Shelf = " +
+                      str(self.target_shelf))   # Debug
 
     # Function runs a apickup routine @ a certain shelf height
 
     def arm_to_shelf(self):
 
         # Move base back to avoid collision
-        self.base_driver.move(-0.35, 0, 0, 2)
+        self.base_driver.move(-0.325, 0, 0, 2)
 
         # Unfold wrist
         self.arm_mover.move(wrist_2_cmd=1.6)
@@ -92,7 +93,7 @@ class Manipulator:
 
         # Move arm to intended height
         self.arm_mover.move(
-            shoulder_lift_cmd_in=self.shoulder_heights[self.taget_shelf], elbow_cmd_in=self.elbow_heights[self.target_shelf], wrist_2_cmd=1.6)
+            shoulder_lift_cmd_in=self.shoulder_heights[self.target_shelf], elbow_cmd_in=self.elbow_heights[self.target_shelf], wrist_2_cmd=1.6)
 
         self.arm_log("ARM @ SHELF")
 
@@ -100,7 +101,8 @@ class Manipulator:
     # Camera currently facing forwards
     def fold_arm(self, timing):
         self.arm_log("FOLDING ARM")
-        # To prevent trophy slip we need to segment the arm movement to keep it level
+        # Twist wrist first to stop dropping the trophy
+        self.arm_mover.move(wrist_2_cmd=3.14)
         self.arm_mover.move(shoulder_lift_cmd_in=-2.40,
                             elbow_cmd_in=2.4, wrist_2_cmd=3.14, duration_in=timing)
         self.arm_log("ARM FOLDED")
@@ -117,12 +119,12 @@ class Manipulator:
     # Currently a dummy routine
     def deposit(self):
         self.unfold_arm()
-        rospy.sleep(3)
+        rospy.sleep(2)
         self.gripper_controller.open()
         self.arm_log("ITEM DEPOSITED")
         # Send message to strategy team to indicate deposit
         self.gripper_result.publish(False)
-        rospy.sleep(2)
+        rospy.sleep(1)
         self.gripper_controller.close()
         self.fold_arm(3)
 
@@ -145,9 +147,21 @@ class Manipulator:
         # Move robot into shelf to grab object
         self.arm_log("MOVING INTO SHELF")
         # THIS NEEDS WORK
-        # Current base movements are taken form Arthurs example
-        self.base_driver.move(0.2, -0.0)
-        self.base_driver.move(0.13, -0.00)
+        # Each shelf seems to require different movements
+        # Not very elegent but a last minute solution
+        if self.target_shelf == 0:  # Seems good
+            self.base_driver.move(0.2, -0.0)
+            self.base_driver.move(0.2, -0.0)
+        elif self.target_shelf == 1:    # This seems good @ 0.2, 0.175  - May need changing after altering angles
+            self.base_driver.move(0.2, -0.0)
+            self.base_driver.move(0.175, -0.0)
+        elif self.target_shelf == 2:    # This seems good
+            self.base_driver.move(0.2, -0.0)
+            self.base_driver.move(0.25, -0.00)
+        else:   # Move it a bit further in  # Seems to be good @0.15,0.15
+            self.base_driver.move(0.15, -0.0)
+            self.base_driver.move(0.15, -0.0)
+
         self.arm_log("GRIPPING")
 
         # Grip object
@@ -158,14 +172,14 @@ class Manipulator:
 
         # Slight lift off the shelf
         self.arm_mover.move(shoulder_lift_cmd_in=(
-            self.shoulder_heights[self.taget_shelf]-0.05), elbow_cmd_in=1.0, wrist_2_cmd=1.6)
+            self.shoulder_heights[self.target_shelf]-0.05), elbow_cmd_in=self.elbow_heights[self.target_shelf]+0.05, wrist_2_cmd=1.6)
 
         self.arm_log("MOVING OUT SHELF")
 
         # Back out of shelf
         self.base_driver.move(-0.3, 0, 0, 2)
 
-        self.fold_arm(15)
+        self.fold_arm(10)
 
         # Send message to strategy team to indicate success
         self.gripper_result.publish(True)
