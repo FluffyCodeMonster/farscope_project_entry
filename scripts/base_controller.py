@@ -240,7 +240,13 @@ class BaseController:
         elif cmd.data == "shelf8":
             self.move_to_pose(self.shelves[7])
         elif cmd.data == "bin":
-            self.move_to_pose(self.shelves[8])
+            # Going to bin often ends up in getting stuck, so in that case we'll go back to the center and then to the bin again.
+            if not self.move_to_pose(self.shelves[8]):
+                self.move_to_pose(self.scout_pose, False)
+                
+                # calling move to bin again recursively here
+                on_command(self, "bin")
+                
         elif cmd.data == "get_cost_of_travel":
             # publish list of path costs to all shelves
             self.get_cost_list.publish(self.calculate_cost_of_travel())
