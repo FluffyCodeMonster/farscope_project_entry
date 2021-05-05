@@ -152,7 +152,7 @@ class Strategy:
             coord = trophy[3]
             new = True
             for i, t in enumerate(old_trophy_list):
-                if t.shelf == shelf & t.level == level & (abs(t.w - pos) < 0.2):
+                if t.shelf == shelf & t.level == level & (abs(t.w - pos) < 0.3):
                     new_trophy = Trophy(
                         trophy_id=t.trophy_id,
                         x=coord[0],
