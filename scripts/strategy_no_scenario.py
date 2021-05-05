@@ -32,10 +32,8 @@ class Strategy:
         self.max_neighborhood_score = data["env"]["max_neighborhood_score"]
 
         # Current Mode of Robot
-        # 0 = Idle
-        # 1 = Robot Moving
-        # 2 = Arm Moving
-        # 3 = Robot Gripping
+        # 0 = Normal
+        # 1 = Waiting for trophy update
         self.mode = 0
 
         # Current Phase of Strategy
@@ -61,6 +59,8 @@ class Strategy:
         self.pub_gripper = rospy.Publisher('/gripper_cmd', String, queue_size=3)
         # Send update to gripper
         self.pub_update = rospy.Publisher('/perception_adjust', Float32, queue_size=3)
+        # Send request for trophy update
+        self.pub_trophy = rospy.Publisher('/trophy_image_robot_request_response', String, queue_size=3)
 
         # Receive list of travel costs to different shelves
         self.sub_travel = rospy.Subscriber("/base_cntrl/cost_list", Float32MultiArray, self.score)
@@ -173,6 +173,9 @@ class Strategy:
                 )
                 self.trophy_list.append(new_trophy)
         self.update_trophy_map()
+        if self.mode == 1:
+            self.mode = 0
+            self.gripper_adjustment()
 
     def base_in_position(self, msg):
         message = msg.data
@@ -204,7 +207,11 @@ class Strategy:
                 self.phase = 0
                 self.travel_times()
         elif result == "ARM @ SHELF":
-            self.gripper_adjustment()
+            self.request_trophy_update()
+
+    def request_trophy_update(self):
+        self.mode = 1
+        self.pub_trophy.publish(String("Image_request"))
 
     def gripper_adjustment(self):
         for trophy in self.trophy_list:
