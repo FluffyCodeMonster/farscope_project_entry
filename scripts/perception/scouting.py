@@ -11,7 +11,11 @@ import numpy as np
 debug_output = True
 # Wait for tf to catch up.
 # TODO Is this long enough/too long?
-wait_time = 2.0
+wait_time = 0.5
+
+# Allows skipping of angles which don't have any shelves.
+#                  30  60  90  120 150 210 240 270 300 330 360
+rotation_angles = [30, 30, 30, 30, 30, 60, 30, 30, 30, 30, 30]  # Degrees
 
 
 class Phases(enum.Enum):
@@ -44,7 +48,8 @@ def wait_for_start(msg_string):
 
 def move_confirmed(msg_string):
     global phase
-    global rotation_counter
+    global rotation_index
+    global total_rotation
 
     if (phase == Phases.INITIAL):
         if (msg_string.data == "OK MOVE"):
@@ -55,17 +60,19 @@ def move_confirmed(msg_string):
             strat_notifier.publish("BAD scouting")
     elif (phase == Phases.SCOUTING) and (msg_string.data == "OK ROTATE"):
         # A rotation has been completed.
-        rotation_counter += 1
-        print(rotation_counter)  # Debug
+        total_rotation += rotation_angles[rotation_index]
 
         if (debug_output):
-            print("One 30d rotation complete")
+            print("Scouting: one {}d rotation complete".format(rotation_angles[rotation_index]))
+            print("Scouting: turned through total rotation: {}d".format(total_rotation))  # Debug
 
-        # rospy.sleep(wait_time) # Commented out cause idk
+        rotation_index += 1
 
-        if (rotation_counter == 24):
+        rospy.sleep(wait_time)
+
+        if (rotation_index == len(rotation_angles)):
             if (debug_output):
-                print("Rotation complete")
+                print("Scouting: rotation complete")
             phase = Phases.COMPLETE
             # Publish that scouting is complete.
             strat_notifier.publish("completed scouting")
@@ -73,21 +80,25 @@ def move_confirmed(msg_string):
         else:
             # Request next image.
             if (debug_output):
-                print("Requesting image")
+                print("Scouting: requesting image")
             image_request_pub.publish("Image_request")
 
 
 def image_taken(msg_string):
+    global rotation_index
+
     if (msg_string.data == "Trophy_estimates_obtained"):
         if (debug_output):
-            print("Image confirmation received")
+            print("Scouting: image confirmation received")
 
-        # Request a rotation by 30 degrees
-        turn_request_pub.publish(10)
+        # Request the next rotation (see rotation_angles)
+        turn_request_pub.publish(rotation_angles[rotation_index])
 
 
 phase = Phases.INITIAL
-rotation_counter = 0
+# Index of the *next* rotation to be performed.
+rotation_index = 0
+total_rotation = 0
 
 # Receive a request to begin scouting process.
 rospy.init_node("scouting")
