@@ -367,7 +367,7 @@ def get_shelf_boundaries(xy_centre, orientation_angle):
     tl = bl + np.array([0, 0, 1.56])
     return [bl, tl, tr, br]
 
-# Set to True to store up trophy position estimates and output them to Rviz as a point cloud.
+# Set to True to output trophy position estimates to Rviz as a point cloud.
 if  '-t' in sys.argv:
     testing = True
     print("*** Testing mode: Sending trophy coordinates to Rviz as point cloud ***")
@@ -375,8 +375,6 @@ else:
     testing = False
     print("*** Run mode: Sending trophy estimates to clustering node ***")
 
-# Testing
-# print(get_shelf_boundaries((2, 0), -math.pi / 2))
 
 rospy.init_node('trophy_projector')
 
@@ -388,15 +386,11 @@ FOCAL_LENGTH = 476.7030836014194 # camera1 focal length (in both x- and y- direc
 # Parsed out of string received from trophy_detector.py.
 camera_frame = None
 
-# Set up planes (TODO read coordinates from file?):
-# List of projection planes.
-# Bottom-left, TL, TR, BR (clockwise from bottom left)
+# Set up planes (TODO [enhancement] read coordinates from file?):
+# List of projection planes. Bottom-left, TL, TR, BR (clockwise from bottom left)
 # Coordinate system - right handed frame.
-# NOTE These are numpy arrays.
 planes = [
     # Shelf 1
-    #ProjectionPlane([(2, -0.44, 0), (2, -0.44, 1.56), (2, 0.44, 1.56), (2, 0.44, 0)]),
-    # TODO Do I need the double brackets here?
     ProjectionPlane(get_shelf_boundaries((2, 0), -math.pi / 2)),
     # Shelf 2
     ProjectionPlane(get_shelf_boundaries((2, -1.5), -math.pi / 2)),
@@ -430,10 +424,9 @@ listener = tf2_ros.TransformListener(tf_buffer)
 
 ######### </globals> ################################################
 
-# TODO Need to define the correct message types for Msg1 and Msg2.
 # Message coming from trophy_detector. Will need:
 # {(Camera pose, coordinates in frame (x, y)), ...}
-# TODO Currently reading in as a string, but this is only a temporary solution.
+# 
 # Queue size of one as this is currently operating on a request-response model - the robot
 # will request that the vision system runs a trophy position estimation process, from image
 # forwarding through to projection, and will block until it receives a message (on the topic 
@@ -447,7 +440,7 @@ if testing:
     point_cloud_pub = rospy.Publisher("trophy_projections_raw_point_cloud", PointCloud)
 
 # Send list of new trophy coordinate estimates to 'clustering' node.
-# TODO Define a custom message type - sending as String is a temporary solution! 
+# TODO Currently serialised into a string. A better solution would be to define a custom ROS message type.
 coord_pub = rospy.Publisher("trophy_coord_ests_3d", String)
 
 # Image projection must only take place when the robot is stationary. This message notifies the robot
@@ -457,7 +450,3 @@ image_projected = rospy.Publisher("/trophy_image_robot_request_response", String
 # TODO Do I need the while, or just the spin()? Check that I am doing this correctly.
 while not rospy.is_shutdown():
     rospy.spin()
-
-# Need:
-# o ROS topic for sending 2D coordinates of bounding box centres in images.
-# Point cloud ROS topic.
