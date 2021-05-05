@@ -144,7 +144,8 @@ class Strategy:
         for trophy in trophy_list.values():
             shelf = trophy[0]
             level = trophy[1]
-            pos = trophy[2] - (self.shelf_width / 2)
+            # pos = trophy[2] - (self.shelf_width / 2)
+            pos = trophy[2]
             coord = trophy[3]
             new = True
             for i, t in enumerate(old_trophy_list):
