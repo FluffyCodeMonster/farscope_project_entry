@@ -50,6 +50,7 @@ class Strategy:
         # List of all Trophies, Constantly Updated
         self.trophy_list = []
         self.trophy_map = self.trophy_map = np.zeros((4, 8))
+        self.trophy_blacklist = []
         self.neighbor_score_mask = data["neighbor_score_mask"]
         self.trophy_goal = None
 
@@ -152,25 +153,30 @@ class Strategy:
             # pos = trophy[2] - (self.shelf_width / 2)
             pos = trophy[2]
             coord = trophy[3]
-            new = True
-            for i, t in enumerate(old_trophy_list):
+            blacklisted = False
+            for t in self.trophy_blacklist:
                 if int(t.shelf) == int(shelf) and int(t.level) == int(level) and (math.dist([t.w], [pos]) < 0.1):
-                    self.trophy_list[i].w = pos
-                    new = False
-            if new:
-                trophy_id = "{}{}{}".format(level, shelf, self.trophy_map[level, shelf-1])
-                new_trophy = Trophy(
-                    trophy_id=trophy_id,
-                    x=coord[0],
-                    y=coord[1],
-                    z=coord[2],
-                    shelf=shelf,
-                    level=level,
-                    w=pos
-                )
-                self.trophy_list.append(new_trophy)
-                self.update_trophy_map()
-            old_trophy_list = copy.deepcopy(self.trophy_list)
+                    blacklisted = True
+            if not blacklisted:
+                new = True
+                for i, t in enumerate(old_trophy_list):
+                    if int(t.shelf) == int(shelf) and int(t.level) == int(level) and (math.dist([t.w], [pos]) < 0.1):
+                        self.trophy_list[i].w = pos
+                        new = False
+                if new:
+                    trophy_id = "{}{}{}".format(level, shelf, self.trophy_map[level, shelf-1])
+                    new_trophy = Trophy(
+                        trophy_id=trophy_id,
+                        x=coord[0],
+                        y=coord[1],
+                        z=coord[2],
+                        shelf=shelf,
+                        level=level,
+                        w=pos
+                    )
+                    self.trophy_list.append(new_trophy)
+                    self.update_trophy_map()
+                old_trophy_list = copy.deepcopy(self.trophy_list)
         self.trophy_list = sorted(self.trophy_list, key=lambda x: (x.level, x.shelf))
         self.update_trophy_map()
         if self.mode == 1:
@@ -204,6 +210,7 @@ class Strategy:
                     if trophy.trophy_id == self.trophy_goal.trophy_id:
                         del self.trophy_list[i]
                         rospy.loginfo("Deleted trophy from list")
+                    self.trophy_blacklist.append(self.trophy_goal)
                 rospy.loginfo("Updated trophy list")
                 rospy.loginfo([str(t) for t in self.trophy_list])
                 self.trophy_goal = None
