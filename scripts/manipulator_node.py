@@ -93,7 +93,7 @@ class Manipulator:
     def arm_to_shelf(self):
 
         # Move base back to avoid collision
-        self.base_driver.move(-0.325, 0, 0, 2)
+        self.base_driver.move(-0.32, 0, 0, 2)
 
         # Unfold wrist
         # self.arm_mover.move(wrist_2_cmd=1.6)

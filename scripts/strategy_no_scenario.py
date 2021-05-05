@@ -55,28 +55,38 @@ class Strategy:
         self.trophy_goal = None
 
         # Send request to publish the travel cost to different shelves
-        self.pub_travel = rospy.Publisher('/base_cntrl/in_cmd', String, queue_size=3)
+        self.pub_travel = rospy.Publisher(
+            '/base_cntrl/in_cmd', String, queue_size=3)
         # Send request to drive to left
-        self.pub_left = rospy.Publisher('/base_cntrl/go_left', Float32, queue_size=3)
+        self.pub_left = rospy.Publisher(
+            '/base_cntrl/go_left', Float32, queue_size=3)
         # Send request to drive to right
-        self.pub_right = rospy.Publisher('/base_cntrl/go_right', Float32, queue_size=3)
+        self.pub_right = rospy.Publisher(
+            '/base_cntrl/go_right', Float32, queue_size=3)
         # Send request for arm to move to certain height
         self.pub_arm = rospy.Publisher('/arm_cmd', Int16, queue_size=3)
         # Send request to grip or drop trophy
-        self.pub_gripper = rospy.Publisher('/gripper_cmd', String, queue_size=3)
+        self.pub_gripper = rospy.Publisher(
+            '/gripper_cmd', String, queue_size=3)
         # Send update to gripper
-        self.pub_update = rospy.Publisher('/perception_adjust', Float32, queue_size=3)
+        self.pub_update = rospy.Publisher(
+            '/perception_adjust', Float32, queue_size=3)
         # Send request for trophy update
-        self.pub_trophy = rospy.Publisher('/trophy_image_robot_request_response', String, queue_size=3)
+        self.pub_trophy = rospy.Publisher(
+            '/trophy_image_robot_request_response', String, queue_size=3)
 
         # Receive list of travel costs to different shelves
-        self.sub_travel = rospy.Subscriber("/base_cntrl/cost_list", Float32MultiArray, self.score)
+        self.sub_travel = rospy.Subscriber(
+            "/base_cntrl/cost_list", Float32MultiArray, self.score)
         # Receive information that base is in position
-        self.sub_base = rospy.Subscriber("/base_cntrl/out_result", String, self.base_in_position)
+        self.sub_base = rospy.Subscriber(
+            "/base_cntrl/out_result", String, self.base_in_position)
         # Receive info on arm status
-        self.sub_arm = rospy.Subscriber("/manipulator/arm_status", String, self.arm_in_position)
+        self.sub_arm = rospy.Subscriber(
+            "/manipulator/arm_status", String, self.arm_in_position)
         # Receive updates about the trophies from perception
-        self.sub_trophy = rospy.Subscriber("/trophy_update", String, self.trophy_update)
+        self.sub_trophy = rospy.Subscriber(
+            "/trophy_update", String, self.trophy_update)
 
         rospy.loginfo("Waiting for loading procedure to finish")
         self.rate = rospy.Rate(2.0)
@@ -120,16 +130,20 @@ class Strategy:
     def calculate_n_density(self, trophy):
         if trophy.shelf == 1:
             map_values = self.trophy_map[:, :2]
-            mask_result = np.multiply(map_values, np.array(self.neighbor_score_mask[str(trophy.level)])[:, 1:])
+            mask_result = np.multiply(map_values, np.array(
+                self.neighbor_score_mask[str(trophy.level)])[:, 1:])
             density = np.sum(mask_result)
             pass
         elif trophy.shelf == 8:
             map_values = self.trophy_map[:, 6:]
-            mask_result = np.multiply(map_values, np.array(self.neighbor_score_mask[str(trophy.level)])[:, :2])
+            mask_result = np.multiply(map_values, np.array(
+                self.neighbor_score_mask[str(trophy.level)])[:, :2])
             density = np.sum(mask_result)
         else:
-            map_values = self.trophy_map[:, (trophy.shelf - 2): (trophy.shelf + 1)]
-            mask_result = np.multiply(map_values, np.array(self.neighbor_score_mask[str(trophy.level)]))
+            map_values = self.trophy_map[:,
+                                         (trophy.shelf - 2): (trophy.shelf + 1)]
+            mask_result = np.multiply(map_values, np.array(
+                self.neighbor_score_mask[str(trophy.level)]))
             density = np.sum(mask_result)
         return density
 
@@ -140,7 +154,8 @@ class Strategy:
         return difficulty
 
     def move_base(self):
-        self.pub_travel.publish(String("shelf{}".format(self.trophy_goal.shelf)))
+        self.pub_travel.publish(
+            String("shelf{}".format(self.trophy_goal.shelf)))
 
     def return_base(self):
         # self.move_base(self.base_x, self.base_y, self.base_alpha)
@@ -166,7 +181,8 @@ class Strategy:
                         self.trophy_list[i].w = pos
                         new = False
                 if new:
-                    trophy_id = "{}{}{}".format(level, shelf, self.trophy_map[level, shelf-1])
+                    trophy_id = "{}{}{}".format(
+                        level, shelf, self.trophy_map[level, shelf-1])
                     new_trophy = Trophy(
                         trophy_id=trophy_id,
                         x=coord[0],
@@ -179,7 +195,8 @@ class Strategy:
                     self.trophy_list.append(new_trophy)
                     self.update_trophy_map()
                 old_trophy_list = copy.deepcopy(self.trophy_list)
-        self.trophy_list = sorted(self.trophy_list, key=lambda x: (x.level, x.shelf))
+        self.trophy_list = sorted(
+            self.trophy_list, key=lambda x: (x.level, x.shelf))
         self.update_trophy_map()
         if self.mode == 1:
             self.mode = 2
@@ -233,9 +250,9 @@ class Strategy:
         for trophy in self.trophy_list:
             if trophy.trophy_id == self.trophy_goal.trophy_id:
                 if trophy.w <= 0:
-                    self.pub_left.publish(Float32(trophy.w * 0.44))
+                    self.pub_left.publish(Float32(trophy.w * 0.625))
                 else:
-                    self.pub_right.publish(Float32(trophy.w * 0.44))
+                    self.pub_right.publish(Float32(trophy.w * 0.625))
 
 
 if __name__ == '__main__':
