@@ -32,7 +32,7 @@ shelf_pose =   [[2.0 - off_set,     0.0,                -pi/2 + pi],
                 [-2.0,              -4.0 + off_set,      pi   + pi],
                 [-3.0 + off_set,    -3.0,                pi/2 + pi],
                 [-2.0,              -1.0 - off_set,      0.0  + pi],
-                [1.0,               1.5 - off_set,       0.0  + pi]]
+                [1.0,               1.4 - off_set,       0.0  + pi]]
 
 class BaseController:
     # Number of seconds required to rotate 1 degree at speed of 0.1 when using base_driver.move.
@@ -204,7 +204,7 @@ class BaseController:
         self.goal_id = 0
         
         # Scouting position
-        self.scout_pose = Pose(Point(-0.5, -2.0, 0.0), self.euler_to_quaternion(0,0,0))
+        self.scout_pose = Pose(Point(-0.5, -2.0, 0.0), self.euler_to_quaternion(0,0,pi))
 
     # This is how we'll react on the commands received
     def on_command(self, cmd):
