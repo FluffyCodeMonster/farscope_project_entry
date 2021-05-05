@@ -7,6 +7,7 @@ from geometry_msgs.msg import Point, Pose, Quaternion
 from std_msgs.msg import String, Int16
 import enum
 import numpy as np
+import sys
 
 debug_output = True
 # Wait for tf to catch up.
@@ -63,8 +64,10 @@ def move_confirmed(msg_string):
         total_rotation += rotation_angles[rotation_index]
 
         if (debug_output):
-            print("Scouting: one {}d rotation complete".format(rotation_angles[rotation_index]))
-            print("Scouting: turned through total rotation: {}d".format(total_rotation))  # Debug
+            print("Scouting: one {}d rotation complete".format(
+                rotation_angles[rotation_index]))
+            print("Scouting: turned through total rotation: {}d".format(
+                total_rotation))  # Debug
 
         rotation_index += 1
 
@@ -96,7 +99,8 @@ def image_taken(msg_string):
 
         # Request the next rotation (see rotation_angles)
         if (debug_output):
-            print("################# Scouting:: rotation_index: {}".format(rotation_index))
+            print("################# Scouting:: rotation_index: {}".format(
+                rotation_index))
         turn_request_pub.publish(rotation_angles[rotation_index])
 
 

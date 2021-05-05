@@ -7,6 +7,7 @@ import json
 import sys
 import numpy as np
 import copy
+import math
 
 
 class Trophy:
@@ -152,17 +153,8 @@ class Strategy:
             coord = trophy[3]
             new = True
             for i, t in enumerate(old_trophy_list):
-                if t.shelf == shelf & t.level == level & (abs(t.w - pos) < 0.2):
-                    new_trophy = Trophy(
-                        trophy_id=t.trophy_id,
-                        x=coord[0],
-                        y=coord[1],
-                        z=coord[2],
-                        shelf=shelf,
-                        level=level,
-                        w=pos
-                    )
-                    self.trophy_list[i] = new_trophy
+                if int(t.shelf) == int(shelf) and int(t.level) == int(level) and (math.dist([t.w], [pos]) < 0.3):
+                    self.trophy_list[i].w = pos
                     new = False
             if new:
                 trophy_id = "{}{}{}".format(level, shelf, self.trophy_map[level, shelf-1])
