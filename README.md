@@ -17,6 +17,12 @@ perhaps each with your own branch, or you can each have [different forks](https:
 
 > Please do not submit pull requests back to this repository - it is intended to serve as a template.  Feel free to report issues with the template though.
 
+## Run the program
+
+The first step is downloading the weights for the neural network from https://drive.google.com/file/d/1ESFDo8f49XlGB-oBHgf-u93HxaLl8cJI/view?usp=sharing. Afterwards the file needs to be placed inside 'farscope_project_entry/scripts/perception/trophy_detector'.
+
+The program can then be run by executing 'roslaunch farscope_project_entry integration.launch'.
+
 ## Controlling the robot
 
 In this section, we walk through the [`our_controller.py`](https://github.com/arthurrichards77/farscope_project_entry/blob/main/scripts/our_controller.py) example file.
