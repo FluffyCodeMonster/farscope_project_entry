@@ -8,6 +8,7 @@ from std_msgs.msg import String, Int16
 import enum
 import numpy as np
 import sys
+import math
 
 debug_output = True
 # Wait for tf to catch up.
@@ -16,7 +17,10 @@ wait_time = 0.5
 
 # Allows skipping of angles which don't have any shelves.
 #                  30  60  90  120 150 210 240 270 300 330 360
-rotation_angles = [30, 30, 30, 30, 30, 60, 30, 30, 30, 30, 30]  # Degrees
+#rotation_angles = [30, 30, 30, 30, 30, 60, 30, 30, 30, 30, 30]  # Degrees
+rotation_angles = [60, 60, 60, 30, 90, 30]
+
+shutdown = False
 
 
 class Phases(enum.Enum):
@@ -40,7 +44,7 @@ def euler_to_quaternion(roll, pitch, yaw):
 def wait_for_start(msg_string):
     if (msg_string.data == "scout"):
         # Drive to scout pose
-        scout_pose = Pose(Point(-0.5, -2.0, 0.0), euler_to_quaternion(0, 0, 0))
+        scout_pose = Pose(Point(-0.5, -2.0, 0.0), euler_to_quaternion(0, 0, math.pi / 2))
         move_request_pub.publish(scout_pose)
 
         if debug_output:
@@ -51,6 +55,7 @@ def move_confirmed(msg_string):
     global phase
     global rotation_index
     global total_rotation
+    global shutdown
 
     if (phase == Phases.INITIAL):
         if (msg_string.data == "OK MOVE"):
@@ -79,10 +84,8 @@ def move_confirmed(msg_string):
             phase = Phases.COMPLETE
             # Publish that scouting is complete.
             strat_notifier.publish("completed scouting")
-            # Shutting the node down [else there is erronous behaviour later on,
-            # when subsequent messages are sent on the subscribed topics].
-            # TODO Do we need to shut the publishers and subscribers down cleanly?
-            sys.exit(0)
+            # Shutting the node down.
+            shutdown = True
         else:
             # Request next image.
             if (debug_output):
@@ -134,4 +137,10 @@ if (debug_output):
     print("Scouting: waiting to start...")
 
 while not rospy.is_shutdown():
-    rospy.spin()
+    if shutdown:
+        if (debug_output):
+            print("Scouting: shutting down node")
+        # Shutting the node down [else there is erronous behaviour later on,
+        # when subsequent messages are sent on the subscribed topics].
+        # TODO Do we need to shut the publishers and subscribers down cleanly?
+        sys.exit(0)
