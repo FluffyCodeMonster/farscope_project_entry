@@ -34,8 +34,8 @@ class Manipulator:
         self.gripper_controller = GripperController()
 
         # Hardcoded shelf height angles
-        self.shoulder_heights = [0.15, -0.55, -1.0, -1.0]
-        self.elbow_heights = [1, 1.65, 1.85, 1]
+        self.shoulder_heights = [0.15, -0.5, -1.0, -1.0]
+        self.elbow_heights = [1, 1.8, 1.85, 1]
 
         # Subscribe to topics from the strat team
         # Callbacks on messages recieved
@@ -86,7 +86,7 @@ class Manipulator:
         self.base_driver.move(-0.325, 0, 0, 2)
 
         # Unfold wrist
-        self.arm_mover.move(wrist_2_cmd=1.6)
+        # self.arm_mover.move(wrist_2_cmd=1.6)
 
         # Publish status as we go "/arm_status"
         self.arm_log("STARTING GRIP")
@@ -140,7 +140,7 @@ class Manipulator:
 
         self.gripper_controller.open()
         # Adjust in the x plane before moving into shelf
-        self.base_driver.move(0, (movement*0.44), 0, 2)    # (movement*0.25)
+        self.base_driver.move(0, -(movement*0.44), 0, 2)    # (movement*0.25)
 
         self.arm_log("BASE ADJUSTED")
 
@@ -154,7 +154,7 @@ class Manipulator:
             self.base_driver.move(0.2, -0.0)
         elif self.target_shelf == 1:    # This seems good @ 0.2, 0.175  - May need changing after altering angles
             self.base_driver.move(0.2, -0.0)
-            self.base_driver.move(0.175, -0.0)
+            self.base_driver.move(0.185, -0.0)
         elif self.target_shelf == 2:    # This seems good
             self.base_driver.move(0.2, -0.0)
             self.base_driver.move(0.25, -0.00)

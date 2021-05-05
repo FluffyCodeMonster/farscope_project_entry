@@ -16,7 +16,7 @@
   </include>
 
   <!-- load the example robot description-->
-  <param name="robot_description" command="$(find xacro)/xacro $(find farscope_project_entry)/models/our_robot.urdf.xacro" />  
+  <param name="robot_description" command="$(find xacro)/xacro $(find farscope_project_entry)/models/farscope_new_gripper_robot.urdf.xacro" />
 
   <!-- need a robot state publisher to translate joints into TF information -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
