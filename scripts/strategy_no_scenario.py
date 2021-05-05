@@ -56,8 +56,10 @@ class Strategy:
 
         # Send request to publish the travel cost to different shelves
         self.pub_travel = rospy.Publisher('/base_cntrl/in_cmd', String, queue_size=3)
-        # Send request to drive to position
-        self.pub_base = rospy.Publisher('/base_cntrl/go_to_pose', Pose, queue_size=3)
+        # Send request to drive to left
+        self.pub_left = rospy.Publisher('/base_cntrl/go_left', Float32, queue_size=3)
+        # Send request to drive to right
+        self.pub_right = rospy.Publisher('/base_cntrl/go_right', Float32, queue_size=3)
         # Send request for arm to move to certain height
         self.pub_arm = rospy.Publisher('/arm_cmd', Int16, queue_size=3)
         # Send request to grip or drop trophy
@@ -180,7 +182,7 @@ class Strategy:
         self.trophy_list = sorted(self.trophy_list, key=lambda x: (x.level, x.shelf))
         self.update_trophy_map()
         if self.mode == 1:
-            self.mode = 0
+            self.mode = 2
             self.gripper_adjustment()
         rospy.loginfo("Updated List")
         rospy.loginfo([str(t) for t in self.trophy_list])
@@ -195,6 +197,8 @@ class Strategy:
                 self.pub_gripper.publish(String("grip"))
             elif self.phase == 1:
                 self.pub_gripper.publish("deposit")
+        elif message == "OK LEFT" or message == "OK RIGHT":
+            self.pub_gripper.publish(String("adjusted"))
         elif message == "completed scouting":
             self.phase = 0
             self.travel_times()
@@ -228,7 +232,10 @@ class Strategy:
     def gripper_adjustment(self):
         for trophy in self.trophy_list:
             if trophy.trophy_id == self.trophy_goal.trophy_id:
-                self.pub_update.publish(Float32(trophy.w))
+                if trophy.w <= 0:
+                    self.pub_left.publish(Float32(trophy.w * 0.44))
+                else:
+                    self.pub_right.publish(Float32(trophy.w * 0.44))
 
 
 if __name__ == '__main__':
