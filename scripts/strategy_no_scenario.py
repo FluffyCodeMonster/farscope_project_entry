@@ -223,7 +223,7 @@ class Strategy:
 
     def request_trophy_update(self):
         self.mode = 1
-        self.pub_trophy.publish(String("Image_request"))
+        self.pub_trophy.publish(String("Image_request::camera2"))
 
     def gripper_adjustment(self):
         for trophy in self.trophy_list:
