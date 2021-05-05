@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# FT 04/2021
 # Trophy projection node
 
 '''
@@ -158,14 +159,14 @@ def dir_vec_from_image(image_dims, centre):
 
     return projn_vec_cam_frame
 
-def get_cam_posn(time):
+def get_cam_posn(time, frame_id):
     success = False
 
     # Point of camera origin.
     cam_origin = PointStamped()
     # TODO Should this be 'time'?
     cam_origin.header.stamp = time
-    cam_origin.header.frame_id = 'camera1_lens'
+    cam_origin.header.frame_id = frame_id
     cam_origin.point.x = 0
     cam_origin.point.y = 0
     cam_origin.point.z = 0
@@ -195,7 +196,7 @@ def get_cam_posn(time):
     return [success, cam_posn_vec]
 
 # projn_vec_cam_frame, cam_origin should be numpy arrays.
-def get_projn_vector(time, projn_vec_cam_frame, cam_origin):
+def get_projn_vector(time, frame_id, projn_vec_cam_frame, cam_origin):
     success = False
 
     print("Created projection vector points for transformation.")
@@ -209,7 +210,7 @@ def get_projn_vector(time, projn_vec_cam_frame, cam_origin):
     projn_vec_cam_frame_point = PointStamped()
     # TODO Should this be 'time'?
     projn_vec_cam_frame_point.header.stamp = time
-    projn_vec_cam_frame_point.header.frame_id = 'camera1_lens'
+    projn_vec_cam_frame_point.header.frame_id = frame_id
     projn_vec_cam_frame_point.point.x = projn_vec_cam_frame[0]
     # y -ve because left handed coordinate frame.
     projn_vec_cam_frame_point.point.y = -1 * projn_vec_cam_frame[1]
@@ -243,7 +244,7 @@ def get_projn_vector(time, projn_vec_cam_frame, cam_origin):
 def on_centres(centres_msg):
     success = True
 
-    [image_time, image_dims, centres] = parse_centres_string(centres_msg.data)
+    [image_time, frame_id, image_dims, centres] = parse_centres_string(centres_msg.data)
 
     print(" ************************************************** Stamp [projector]:: {}".format(image_time))
 
@@ -255,7 +256,7 @@ def on_centres(centres_msg):
     # Get camera position in 'odom' frame, as well as frame orientation (i.e. direction vector through (1,0,0)
     # from the camera1 lens), both as numpy 3d-vectors.
     # cam_posn_transform_success
-    [success, cam_coord] = get_cam_posn(image_time)
+    [success, cam_coord] = get_cam_posn(image_time, frame_id)
     print("Camera coordinate: {}".format(cam_coord))
     #print(cam_orientation)
 
@@ -267,7 +268,7 @@ def on_centres(centres_msg):
             projn_vec_in_cam_frame = dir_vec_from_image(image_dims, centre)
             # Convert into a projection direction in the odom frame.
             # projn_vec_transform_success
-            [success, projection_line_dir] = get_projn_vector(image_time, projn_vec_in_cam_frame, cam_coord)
+            [success, projection_line_dir] = get_projn_vector(image_time, frame_id, projn_vec_in_cam_frame, cam_coord)
             print("Projn vector in odom frame: {}".format(projection_line_dir))
             
             if success:
@@ -304,7 +305,8 @@ def on_centres(centres_msg):
             point_cloud.header.stamp = rospy.Time.now()
             point_cloud_pub.publish(point_cloud)
     
-    image_projected.publish("Trophy_estimates_obtained")
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ frame_id: {}".format(frame_id))
+    image_projected.publish("Trophy_estimates_obtained::{}".format(frame_id))
 
 # TODO Temp - need to develop a custom message format
 def gen_msg_string(centres):
@@ -317,7 +319,7 @@ def gen_msg_string(centres):
 
 def parse_centres_string(centres_string):
     # String format:
-    # secs.nsecs;image_height.image_width;x1.y1;x2.y2;...
+    # secs.nsecs;frame_id;image_height.image_width;x1.y1;x2.y2;...
     centres = []
     msg_split = centres_string.split(';')
     print(msg_split)
@@ -327,19 +329,22 @@ def parse_centres_string(centres_string):
     print(dot_split)
     time = rospy.Time(int(dot_split[0]), int(dot_split[1]))
 
+    # Parsing frame_id.
+    frame_id = msg_split[1]
+
     # Parsing image dimensions.
-    dot_split = msg_split[1].split('.')
+    dot_split = msg_split[2].split('.')
     print(dot_split)
     image_dims = (int(dot_split[0]), int(dot_split[1]))
 
     # Parsing centre coords.
-    for centre_string in msg_split[2:]:
+    for centre_string in msg_split[3:]:
         # TODO Should this be double bracketed?
         dot_split = centre_string.split('.')
         print(dot_split)
         centres.append((int(dot_split[0]), int(dot_split[1])))
     
-    return [time, image_dims, centres]
+    return [time, frame_id, image_dims, centres]
 
 # xy_centre needs to be on the trophy plane.
 # orientation_angle as it is in the world file - 0 means that the shelf is pointing in the
@@ -379,6 +384,9 @@ rospy.init_node('trophy_projector')
 
 CAM_FOV_RADIANS = 1.3962634 # camera1 field of view
 FOCAL_LENGTH = 476.7030836014194 # camera1 focal length (in both x- and y- directions)
+
+# Parsed out of string received from trophy_detector.py.
+camera_frame = None
 
 # Set up planes (TODO read coordinates from file?):
 # List of projection planes.

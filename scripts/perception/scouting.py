@@ -90,13 +90,14 @@ def move_confirmed(msg_string):
             # Request next image.
             if (debug_output):
                 print("Scouting: requesting image")
-            image_request_pub.publish("Image_request")
+            # Need to specify that we want to use camera1.
+            image_request_pub.publish("Image_request::camera1")
 
 
 def image_taken(msg_string):
     global rotation_index
 
-    if (msg_string.data == "Trophy_estimates_obtained"):
+    if (msg_string.data == "Trophy_estimates_obtained::camera1_lens"):
         if (debug_output):
             print("Scouting: image confirmation received")
 
