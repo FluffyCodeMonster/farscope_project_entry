@@ -98,13 +98,16 @@ class Strategy:
         travel_times = msg.data
         max_val = (0, None)
         for trophy in self.trophy_list:
-            deploy_time = travel_times[trophy.shelf]
-            n_density = self.calculate_n_density(trophy)
-            difficulty = self.calculate_difficulty(trophy)
-            score = (1.0 * (1 - (deploy_time / max(travel_times)))
-                     + 0 * (n_density / self.max_neighborhood_score)) * (1 - difficulty)
-            if score > max_val[0]:
-                max_val = (score, trophy)
+            if trophy.shelf == 1:
+                pass
+            else:
+                deploy_time = travel_times[trophy.shelf]
+                n_density = self.calculate_n_density(trophy)
+                difficulty = self.calculate_difficulty(trophy)
+                score = (1.0 * (1 - (deploy_time / max(travel_times)))
+                         + 0 * (n_density / self.max_neighborhood_score)) * (1 - difficulty)
+                if score > max_val[0]:
+                    max_val = (score, trophy)
         self.trophy_goal = max_val[1]
         self.move_base()
 
