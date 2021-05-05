@@ -7,6 +7,7 @@ import json
 import sys
 import numpy as np
 import copy
+import math
 
 
 class Trophy:
@@ -18,6 +19,9 @@ class Trophy:
         self.shelf = shelf
         self.level = level
         self.w = w
+
+    def __str__(self):
+        return "id: {}, shelf: {}, level: {}, position: {}".format(self.trophy_id, self.shelf, self.level, self.w)
 
 
 class Strategy:
@@ -149,17 +153,8 @@ class Strategy:
             coord = trophy[3]
             new = True
             for i, t in enumerate(old_trophy_list):
-                if t.shelf == shelf & t.level == level & (abs(t.w - pos) < 0.2):
-                    new_trophy = Trophy(
-                        trophy_id=t.trophy_id,
-                        x=coord[0],
-                        y=coord[1],
-                        z=coord[2],
-                        shelf=shelf,
-                        level=level,
-                        w=pos
-                    )
-                    self.trophy_list[i] = new_trophy
+                if int(t.shelf) == int(shelf) and int(t.level) == int(level) and (math.dist([t.w], [pos]) < 0.3):
+                    self.trophy_list[i].w = pos
                     new = False
             if new:
                 trophy_id = "{}{}{}".format(level, shelf, self.trophy_map[level, shelf-1])
@@ -178,7 +173,7 @@ class Strategy:
             self.mode = 0
             self.gripper_adjustment()
         rospy.loginfo("Updated List")
-        rospy.loginfo(str(self.trophy_list))
+        rospy.loginfo([str(t) for t in self.trophy_list])
 
     def base_in_position(self, msg):
         message = msg.data
@@ -206,7 +201,7 @@ class Strategy:
                         del self.trophy_list[i]
                         rospy.loginfo("Deleted trophy from list")
                 rospy.loginfo("Updated trophy list")
-                rospy.loginfo(str(self.trophy_list))
+                rospy.loginfo([str(t) for t in self.trophy_list])
                 self.trophy_goal = None
                 self.return_base()
             elif self.phase == 1:
