@@ -17,6 +17,10 @@ perhaps each with your own branch, or you can each have [different forks](https:
 
 > Please do not submit pull requests back to this repository - it is intended to serve as a template.  Feel free to report issues with the template though.
 
+## Run the program
+
+The program can be run by executing 'roslaunch farscope_project_entry integration.launch'.
+
 ## Controlling the robot
 
 In this section, we walk through the [`our_controller.py`](https://github.com/arthurrichards77/farscope_project_entry/blob/main/scripts/our_controller.py) example file.
