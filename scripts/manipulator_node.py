@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import rospy
+# import tf2_ros
 from farscope_project_entry.farscope_robot_utils import ArmMover, GripperController, BaseDriver
 from std_msgs.msg import Bool, String, Int16, Float32
+# from geometry_msgs.msg import PointStamped
 
 # Create class for the manipulator
 
@@ -43,14 +45,18 @@ class Manipulator:
             "/arm_cmd", Int16, self.shelf_selection)
         self.gripper_cmd = rospy.Subscriber(
             "/gripper_cmd", String, self.selection)
-        self.adjust_sub = rospy.Subscriber(
-            "/perception_adjust", Float32, self.adjust_and_grip)
+        # self.adjust_sub = rospy.Subscriber(
+        #     "/perception_adjust", Float32, self.adjust_and_grip)
 
         # Log info
         self.arm_log("Initialising Manipulator node")
 
         self.target_shelf = 0
         #self.adjust_float = 0
+
+        # Start tf buffer and listener
+        # self.tf_buffer = tf2_ros.Buffer()
+        # self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
     # Selection function takes input from strategy and choose a routine to run
     def selection(self, msg):
@@ -67,6 +73,10 @@ class Manipulator:
         elif command == "fold":
             self.fold_arm(3)
             self.gripper_controller.close()
+
+        elif command == "adjusted":
+            self.gripper_controller.open()
+            self.grip()
 
         else:
             self.arm_log("READY")
@@ -95,6 +105,7 @@ class Manipulator:
         self.arm_mover.move(
             shoulder_lift_cmd_in=self.shoulder_heights[self.target_shelf], elbow_cmd_in=self.elbow_heights[self.target_shelf], wrist_2_cmd=1.6)
 
+        self.gripper_controller.open()
         self.arm_log("ARM @ SHELF")
 
     # Function moves arm into a position for transit
@@ -134,15 +145,17 @@ class Manipulator:
         self.arm_status.publish(message)
 
     # Function to continue gripping task
-    def adjust_and_grip(self, msg):
-        # Take data from message
-        movement = msg.data
+    def grip(self):
+        # # Take data from message
+        # movement = msg.data
 
-        self.gripper_controller.open()
-        # Adjust in the x plane before moving into shelf
-        self.base_driver.move(0, -(movement*0.44), 0, 2)    # (movement*0.25)
+        # self.gripper_controller.open()
 
-        self.arm_log("BASE ADJUSTED")
+        # # Adjust in the x plane before moving into shelf
+        # # self.get_gripper_posn() + movement
+        # self.base_driver.move(0,  -(movement*0.44), 0, 2)
+
+        #self.arm_log("BASE ADJUSTED")
 
         # Move robot into shelf to grab object
         self.arm_log("MOVING INTO SHELF")
@@ -183,6 +196,45 @@ class Manipulator:
 
         # Send message to strategy team to indicate success
         self.gripper_result.publish(True)
+
+    # # Gripper position correction
+    # def get_gripper_posn(self):
+    #     success = False
+
+    #     # Point of camera origin.
+    #     gripper_position = PointStamped()
+    #     # TODO Should this be 'time'?
+    #     gripper_position.header.stamp = rospy.Time.now()
+    #     gripper_position.header.frame_id = "wrist_3_link"
+    #     gripper_position.point.x = 0
+    #     gripper_position.point.y = 0
+    #     gripper_position.point.z = 0
+
+    #     print("Created gripper origin for transformation.")
+
+    #     try:
+    #         # TODO Need to deal with if time is 0 because the clock hasn't been published yet(?)? - http://wiki.ros.org/roscpp/Overview/Time
+
+    #         # Now need to transform origin and position vector of one.
+    #         # Times out after 1 second. What happens if the buffer doesn't contain the
+    #         # transformation after this duration? [I think it throws an error]
+    #         # --> Even works with a duration of 0.001 - how does this work? TODO
+    #         gripper_in_odom = self.tf_buffer.transform(
+    #             gripper_position, 'odom', rospy.Duration(1))
+    #         print("Performed transform")
+
+    #         # gripper_posn_vec = np.array(
+    #         #     [cam_in_odom.point.x, cam_in_odom.point.y, cam_in_odom.point.z])
+
+    #         success = True
+    #     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+    #         # TODO Need to add more details to this. Might just be doing it because the buffer isn't large enough yet.
+    #         # TODO Might need to revise this error message now that I've chopped things around.
+    #         print("Transform error ~ it's likely that the picture time predates the tf transform buffer. Image ignored.")
+    #         print("   Message:: {}".format(e))
+
+    #     # cam_posn_vec is a numpy 3-vector
+    #     return gripper_in_odom
 
 
 # Main function of script
