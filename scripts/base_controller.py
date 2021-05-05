@@ -37,7 +37,7 @@ shelf_pose =   [[2.0 - off_set,     0.0,                -pi/2 + pi],
 class BaseController:
     # Number of seconds required to rotate 1 degree at speed of 0.1 when using base_driver.move.
     # E.g. to rotate 15 degrees to the right we'll need: self.base_driver.move(0, 0, 0.1, 15 * ROT_1_DEG_TIME)
-    ROT_1_DEG_TIME = 0.3
+    ROT_1_DEG_TIME = 0.2
     
     def __init__(self):
         # This will be our node name
