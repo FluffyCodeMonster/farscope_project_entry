@@ -438,7 +438,7 @@ coord_pub = rospy.Publisher("trophy_coord_ests_3d", String)
 
 # Image projection must only take place when the robot is stationary. This message notifies the robot
 # that the image has been processed and it is okay to continue.
-image_projected = rospy.Publisher("/trophy_image_request_response", String)
+image_projected = rospy.Publisher("/trophy_image_robot_request_response", String)
 
 # TODO Do I need the while, or just the spin()? Check that I am doing this correctly.
 while not rospy.is_shutdown():

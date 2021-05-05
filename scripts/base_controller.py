@@ -32,12 +32,12 @@ shelf_pose =   [[2.0 - off_set,     0.0,                -pi/2 + pi],
                 [-2.0,              -4.0 + off_set,      pi   + pi],
                 [-3.0 + off_set,    -3.0,                pi/2 + pi],
                 [-2.0,              -1.0 - off_set,      0.0  + pi],
-                [1.0,               1.5 - off_set,       0.0  + pi]]
+                [1.0,               1.4 - off_set,       0.0  + pi]]
 
 class BaseController:
     # Number of seconds required to rotate 1 degree at speed of 0.1 when using base_driver.move.
     # E.g. to rotate 15 degrees to the right we'll need: self.base_driver.move(0, 0, 0.1, 15 * ROT_1_DEG_TIME)
-    ROT_1_DEG_TIME = 0.3
+    ROT_1_DEG_TIME = 0.2
     
     def __init__(self):
         # This will be our node name
@@ -204,7 +204,7 @@ class BaseController:
         self.goal_id = 0
         
         # Scouting position
-        self.scout_pose = Pose(Point(-0.5, -2.0, 0.0), self.euler_to_quaternion(0,0,0))
+        self.scout_pose = Pose(Point(-0.5, -2.0, 0.0), self.euler_to_quaternion(0,0,pi))
 
     # This is how we'll react on the commands received
     def on_command(self, cmd):
@@ -240,7 +240,13 @@ class BaseController:
         elif cmd.data == "shelf8":
             self.move_to_pose(self.shelves[7])
         elif cmd.data == "bin":
-            self.move_to_pose(self.shelves[8])
+            # Going to bin often ends up in getting stuck, so in that case we'll go back to the center and then to the bin again.
+            if not self.move_to_pose(self.shelves[8]):
+                self.move_to_pose(self.scout_pose, False)
+                
+                # calling move to bin again recursively here
+                self.on_command(String("bin"))
+                
         elif cmd.data == "get_cost_of_travel":
             # publish list of path costs to all shelves
             self.get_cost_list.publish(self.calculate_cost_of_travel())

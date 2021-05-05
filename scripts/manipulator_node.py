@@ -35,6 +35,7 @@ class Manipulator:
 
         # Hardcoded shelf heights
         self.shoulder_heights = [0.15, -0.25, -0.6, -1.0]
+        self.elbow_heights = [1, 1.5, 1.64, 1]
 
         # Subscribe to topics from the strat team
         # Callbacks on messages recieved
@@ -65,6 +66,7 @@ class Manipulator:
 
         elif command == "fold":
             self.fold_arm(3)
+            self.gripper_controller.close()
 
         else:
             self.arm_log("READY")
@@ -80,7 +82,7 @@ class Manipulator:
     def arm_to_shelf(self):
 
         # Move base back to avoid collision
-        self.base_driver.move(-0.30, 0, 0, 2)
+        self.base_driver.move(-0.35, 0, 0, 2)
 
         # Unfold wrist
         self.arm_mover.move(wrist_2_cmd=1.6)
@@ -90,7 +92,7 @@ class Manipulator:
 
         # Move arm to intended height
         self.arm_mover.move(
-            shoulder_lift_cmd_in=self.shoulder_heights[self.taget_shelf], elbow_cmd_in=1.0, wrist_2_cmd=1.6)
+            shoulder_lift_cmd_in=self.shoulder_heights[self.taget_shelf], elbow_cmd_in=self.elbow_heights[self.target_shelf], wrist_2_cmd=1.6)
 
         self.arm_log("ARM @ SHELF")
 
@@ -101,6 +103,7 @@ class Manipulator:
         # To prevent trophy slip we need to segment the arm movement to keep it level
         self.arm_mover.move(shoulder_lift_cmd_in=-2.40,
                             elbow_cmd_in=2.4, wrist_2_cmd=3.14, duration_in=timing)
+        self.arm_log("ARM FOLDED")
 
     # Function to unfold the arm for deposit
 
@@ -114,10 +117,13 @@ class Manipulator:
     # Currently a dummy routine
     def deposit(self):
         self.unfold_arm()
+        rospy.sleep(3)
         self.gripper_controller.open()
         self.arm_log("ITEM DEPOSITED")
         # Send message to strategy team to indicate deposit
         self.gripper_result.publish(False)
+        rospy.sleep(2)
+        self.gripper_controller.close()
         self.fold_arm(3)
 
     # Function logs the string input to rosout & /arm_status
@@ -129,11 +135,10 @@ class Manipulator:
     def adjust_and_grip(self, msg):
         # Take data from message
         movement = msg.data
-        # Adjust in the x plane before moving into shelf
-        self.base_driver.move(0, (movement*0.5), 0, 2)
 
-        data = msg.data
-        self.base_driver.move(0, data, 0, 2)
+        self.gripper_controller.open()
+        # Adjust in the x plane before moving into shelf
+        self.base_driver.move(0, (movement*0.44), 0, 2)    # (movement*0.25)
 
         self.arm_log("BASE ADJUSTED")
 
@@ -142,7 +147,7 @@ class Manipulator:
         # THIS NEEDS WORK
         # Current base movements are taken form Arthurs example
         self.base_driver.move(0.2, -0.0)
-        self.base_driver.move(0.15, -0.00)
+        self.base_driver.move(0.13, -0.00)
         self.arm_log("GRIPPING")
 
         # Grip object

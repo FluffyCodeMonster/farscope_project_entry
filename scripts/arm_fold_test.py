@@ -18,7 +18,7 @@ class arm_fold():
         command = msg.data
 
         if command == "fold":
-            self.arm_mover.move(shoulder_lift_cmd_in = -2.40, elbow_cmd_in=2.34, wrist_2_cmd = -1.61)
+            self.arm_mover.move(shoulder_lift_cmd_in = -2.40, elbow_cmd_in=2.34, wrist_2_cmd = 3.14)
 
 
 

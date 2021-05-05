@@ -19,6 +19,9 @@ class Trophy:
         self.level = level
         self.w = w
 
+    def __str__(self):
+        return "id: {}, shelf: {}, level: {}, position: {}".format(self.trophy_id, self.shelf, self.level, self.w)
+
 
 class Strategy:
     def __init__(self, data_file_path):
@@ -32,10 +35,8 @@ class Strategy:
         self.max_neighborhood_score = data["env"]["max_neighborhood_score"]
 
         # Current Mode of Robot
-        # 0 = Idle
-        # 1 = Robot Moving
-        # 2 = Arm Moving
-        # 3 = Robot Gripping
+        # 0 = Normal
+        # 1 = Waiting for trophy update
         self.mode = 0
 
         # Current Phase of Strategy
@@ -61,6 +62,8 @@ class Strategy:
         self.pub_gripper = rospy.Publisher('/gripper_cmd', String, queue_size=3)
         # Send update to gripper
         self.pub_update = rospy.Publisher('/perception_adjust', Float32, queue_size=3)
+        # Send request for trophy update
+        self.pub_trophy = rospy.Publisher('/trophy_image_robot_request_response', String, queue_size=3)
 
         # Receive list of travel costs to different shelves
         self.sub_travel = rospy.Subscriber("/base_cntrl/cost_list", Float32MultiArray, self.score)
@@ -98,13 +101,16 @@ class Strategy:
         travel_times = msg.data
         max_val = (0, None)
         for trophy in self.trophy_list:
-            deploy_time = travel_times[trophy.shelf]
-            n_density = self.calculate_n_density(trophy)
-            difficulty = self.calculate_difficulty(trophy)
-            score = (1.0 * (1 - (deploy_time / max(travel_times)))
-                     + 0 * (n_density / self.max_neighborhood_score)) * (1 - difficulty)
-            if score > max_val[0]:
-                max_val = (score, trophy)
+            if trophy.shelf == 1:
+                pass
+            else:
+                deploy_time = travel_times[trophy.shelf]
+                n_density = self.calculate_n_density(trophy)
+                difficulty = self.calculate_difficulty(trophy)
+                score = (1.0 * (1 - (deploy_time / max(travel_times)))
+                         + 0 * (n_density / self.max_neighborhood_score)) * (1 - difficulty)
+                if score > max_val[0]:
+                    max_val = (score, trophy)
         self.trophy_goal = max_val[1]
         self.move_base()
 
@@ -141,11 +147,12 @@ class Strategy:
         for trophy in trophy_list.values():
             shelf = trophy[0]
             level = trophy[1]
-            pos = trophy[2] - (self.shelf_width / 2)
+            # pos = trophy[2] - (self.shelf_width / 2)
+            pos = trophy[2]
             coord = trophy[3]
             new = True
             for i, t in enumerate(old_trophy_list):
-                if t.shelf == shelf & t.level == level & ((t.w - pos) < 0.1):
+                if t.shelf == shelf & t.level == level & (abs(t.w - pos) < 0.2):
                     new_trophy = Trophy(
                         trophy_id=t.trophy_id,
                         x=coord[0],
@@ -170,6 +177,11 @@ class Strategy:
                 )
                 self.trophy_list.append(new_trophy)
         self.update_trophy_map()
+        if self.mode == 1:
+            self.mode = 0
+            self.gripper_adjustment()
+        rospy.loginfo("Updated List")
+        rospy.loginfo([str(t) for t in self.trophy_list])
 
     def base_in_position(self, msg):
         message = msg.data
@@ -195,13 +207,20 @@ class Strategy:
                 for i, trophy in enumerate(self.trophy_list):
                     if trophy.trophy_id == self.trophy_goal.trophy_id:
                         del self.trophy_list[i]
+                        rospy.loginfo("Deleted trophy from list")
+                rospy.loginfo("Updated trophy list")
+                rospy.loginfo([str(t) for t in self.trophy_list])
                 self.trophy_goal = None
                 self.return_base()
             elif self.phase == 1:
                 self.phase = 0
                 self.travel_times()
         elif result == "ARM @ SHELF":
-            self.gripper_adjustment()
+            self.request_trophy_update()
+
+    def request_trophy_update(self):
+        self.mode = 1
+        self.pub_trophy.publish(String("Image_request"))
 
     def gripper_adjustment(self):
         for trophy in self.trophy_list:
