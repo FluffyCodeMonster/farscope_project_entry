@@ -86,8 +86,7 @@ class Strategy:
     def update_trophy_map(self):
         self.trophy_map = np.zeros((4, 8))
         for trophy in self.trophy_list:
-            self.trophy_map[int(trophy.level), int(trophy.shelf)-1] = self.trophy_map[int(trophy.level),
-                                                                                      int(trophy.shelf)-1] + 1
+            self.trophy_map[int(trophy.level), int(trophy.shelf)-1] += 1
 
     def retract_arm(self):
         self.pub_gripper.publish(String("fold"))
@@ -153,7 +152,7 @@ class Strategy:
             coord = trophy[3]
             new = True
             for i, t in enumerate(old_trophy_list):
-                if int(t.shelf) == int(shelf) and int(t.level) == int(level) and (math.dist([t.w], [pos]) < 0.3):
+                if int(t.shelf) == int(shelf) and int(t.level) == int(level) and (math.dist([t.w], [pos]) < 0.1):
                     self.trophy_list[i].w = pos
                     new = False
             if new:
@@ -168,6 +167,8 @@ class Strategy:
                     w=pos
                 )
                 self.trophy_list.append(new_trophy)
+                self.update_trophy_map()
+            old_trophy_list = copy.deepcopy(self.trophy_list)
         self.trophy_list = sorted(self.trophy_list, key=lambda x: (x.level, x.shelf))
         self.update_trophy_map()
         if self.mode == 1:
