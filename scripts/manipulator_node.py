@@ -65,6 +65,7 @@ class Manipulator:
 
         elif command == "fold":
             self.fold_arm(3)
+            self.gripper_controller.close()
 
         else:
             self.arm_log("READY")
@@ -101,6 +102,7 @@ class Manipulator:
         # To prevent trophy slip we need to segment the arm movement to keep it level
         self.arm_mover.move(shoulder_lift_cmd_in=-2.40,
                             elbow_cmd_in=2.4, wrist_2_cmd=3.14, duration_in=timing)
+        self.arm_log("ARM FOLDED")
 
     # Function to unfold the arm for deposit
 
@@ -129,11 +131,10 @@ class Manipulator:
     def adjust_and_grip(self, msg):
         # Take data from message
         movement = msg.data
-        # Adjust in the x plane before moving into shelf
-        self.base_driver.move(0, (movement*0.5), 0, 2)
 
-        data = msg.data
-        self.base_driver.move(0, data, 0, 2)
+        self.gripper_controller.open()
+        # Adjust in the x plane before moving into shelf
+        self.base_driver.move(0, (movement*0.25), 0, 2)
 
         self.arm_log("BASE ADJUSTED")
 
