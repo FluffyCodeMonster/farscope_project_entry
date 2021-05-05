@@ -2,7 +2,7 @@
 # SA and FT, 4/5/21
 # Automate scouting process
 
-import rospy
+import sys, rospy
 from geometry_msgs.msg import Point, Pose, Quaternion
 from std_msgs.msg import String, Int16
 import enum

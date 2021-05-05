@@ -196,7 +196,7 @@ bridge = CvBridge()
 # longer reflect the true position of the robot), but the image stream will be less continuous.
 # Buffer size based on queue_size (1) x average message size
 # TODO Still need to experiment with buffer size
-image_sub = rospy.Subscriber("image_for_trophy_detection", Image, on_image)#, queue_size=1)
+image_sub = rospy.Subscriber("image_for_trophy_detection", Image, on_image, queue_size=1)
 
 # TODO Change this description if the camera being used changes from camera1.
 ###### Publishers (trophy coords, images with bounding boxes, camera1 image requests) ######
