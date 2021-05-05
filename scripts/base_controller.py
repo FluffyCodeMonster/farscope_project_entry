@@ -245,7 +245,7 @@ class BaseController:
                 self.move_to_pose(self.scout_pose, False)
                 
                 # calling move to bin again recursively here
-                on_command(self, "bin")
+                self.on_command(self, "bin")
                 
         elif cmd.data == "get_cost_of_travel":
             # publish list of path costs to all shelves
