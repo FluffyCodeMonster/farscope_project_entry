@@ -19,7 +19,9 @@ perhaps each with your own branch, or you can each have [different forks](https:
 
 ## Run the program
 
-The program can be run by executing 'roslaunch farscope_project_entry integration.launch'.
+The first step is downloading the weights for the neural network from https://drive.google.com/file/d/1ESFDo8f49XlGB-oBHgf-u93HxaLl8cJI/view?usp=sharing. Afterwards the file needs to be placed inside 'farscope_project_entry/scripts/perception/trophy_detector'.
+
+The program can then be run by executing 'roslaunch farscope_project_entry integration.launch'.
 
 ## Controlling the robot
 
