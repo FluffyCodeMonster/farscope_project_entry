@@ -19,13 +19,17 @@ perhaps each with your own branch, or you can each have [different forks](https:
 
 ## Setup and Dependencies 
 
-sudo apt-get install python-is-python3 
+To guarentee your system is using python3 run the following command within your terminal.
+`sudo apt-get install python-is-python3`
 
-rosdep install --from-paths src --ignore-src -r -y (from project folder)
+To install all package dependencies run the following command.
+`rosdep install --from-paths src --ignore-src -r -y (from project folder)`
 
-catkin_make 
+Run a catkin_make from the root directory (folder containing [src], [devel], [build])
+`catkin_make `
 
-source devel/setup.bash may also be required
+Source the [setup.bash] file found in [devel] before attempting the launch.
+`source devel/setup.bash`
 
 ## Run the program
 
