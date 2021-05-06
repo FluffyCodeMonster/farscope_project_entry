@@ -8,7 +8,7 @@
   <!-- use `roslaunch farscope_example_robot_simulate use_gui:=false` to turn off Gazebo GUI -->
   <!-- use `roslaunch farscope_example_robot_simulate scenario:=<file>` to change scenario file -->
   <!-- e.g. `scenario:=$(find farscope_group_project)/scenarios/all_no_random.yaml` all trophies, perfectly placed -->
-  <arg name="scenario_file" default="$(find farscope_project_entry)/scenarios/all_no_random.yaml" />
+  <arg name="scenario_file" default="$(find farscope_project_entry)/scenarios/typical.yaml" />
   <arg name="use_gui" default="true" />
   <include file="$(find farscope_project_entry)/launch/simulator_only.launch">
     <arg name="use_gui" value="$(arg use_gui)" />

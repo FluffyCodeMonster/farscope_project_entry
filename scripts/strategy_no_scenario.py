@@ -7,6 +7,9 @@ import json
 import sys
 import numpy as np
 import copy
+import math
+import tf2_ros
+from tf2_geometry_msgs import PointStamped
 
 
 class Trophy:
@@ -27,6 +30,10 @@ class Strategy:
     def __init__(self, data_file_path):
 
         rospy.init_node("strategy")
+
+        # Start tf buffer and listener
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
         with open(data_file_path) as data_file:
             data = json.load(data_file)
@@ -49,30 +56,43 @@ class Strategy:
         # List of all Trophies, Constantly Updated
         self.trophy_list = []
         self.trophy_map = self.trophy_map = np.zeros((4, 8))
+        self.trophy_blacklist = []
         self.neighbor_score_mask = data["neighbor_score_mask"]
         self.trophy_goal = None
 
         # Send request to publish the travel cost to different shelves
-        self.pub_travel = rospy.Publisher('/base_cntrl/in_cmd', String, queue_size=3)
-        # Send request to drive to position
-        self.pub_base = rospy.Publisher('/base_cntrl/go_to_pose', Pose, queue_size=3)
+        self.pub_travel = rospy.Publisher(
+            '/base_cntrl/in_cmd', String, queue_size=3)
+        # Send request to drive to left
+        self.pub_left = rospy.Publisher(
+            '/base_cntrl/go_left', Float32, queue_size=3)
+        # Send request to drive to right
+        self.pub_right = rospy.Publisher(
+            '/base_cntrl/go_right', Float32, queue_size=3)
         # Send request for arm to move to certain height
         self.pub_arm = rospy.Publisher('/arm_cmd', Int16, queue_size=3)
         # Send request to grip or drop trophy
-        self.pub_gripper = rospy.Publisher('/gripper_cmd', String, queue_size=3)
+        self.pub_gripper = rospy.Publisher(
+            '/gripper_cmd', String, queue_size=3)
         # Send update to gripper
-        self.pub_update = rospy.Publisher('/perception_adjust', Float32, queue_size=3)
+        self.pub_update = rospy.Publisher(
+            '/perception_adjust', Float32, queue_size=3)
         # Send request for trophy update
-        self.pub_trophy = rospy.Publisher('/trophy_image_robot_request_response', String, queue_size=3)
+        self.pub_trophy = rospy.Publisher(
+            '/trophy_image_robot_request_response', String, queue_size=3)
 
         # Receive list of travel costs to different shelves
-        self.sub_travel = rospy.Subscriber("/base_cntrl/cost_list", Float32MultiArray, self.score)
+        self.sub_travel = rospy.Subscriber(
+            "/base_cntrl/cost_list", Float32MultiArray, self.score)
         # Receive information that base is in position
-        self.sub_base = rospy.Subscriber("/base_cntrl/out_result", String, self.base_in_position)
+        self.sub_base = rospy.Subscriber(
+            "/base_cntrl/out_result", String, self.base_in_position)
         # Receive info on arm status
-        self.sub_arm = rospy.Subscriber("/manipulator/arm_status", String, self.arm_in_position)
+        self.sub_arm = rospy.Subscriber(
+            "/manipulator/arm_status", String, self.arm_in_position)
         # Receive updates about the trophies from perception
-        self.sub_trophy = rospy.Subscriber("/trophy_update", String, self.trophy_update)
+        self.sub_trophy = rospy.Subscriber(
+            "/trophy_update", String, self.trophy_update)
 
         rospy.loginfo("Waiting for loading procedure to finish")
         self.rate = rospy.Rate(2.0)
@@ -85,8 +105,7 @@ class Strategy:
     def update_trophy_map(self):
         self.trophy_map = np.zeros((4, 8))
         for trophy in self.trophy_list:
-            self.trophy_map[int(trophy.level), int(trophy.shelf)-1] = self.trophy_map[int(trophy.level),
-                                                                                      int(trophy.shelf)-1] + 1
+            self.trophy_map[int(trophy.level), int(trophy.shelf)-1] += 1
 
     def retract_arm(self):
         self.pub_gripper.publish(String("fold"))
@@ -117,25 +136,32 @@ class Strategy:
     def calculate_n_density(self, trophy):
         if trophy.shelf == 1:
             map_values = self.trophy_map[:, :2]
-            mask_result = np.multiply(map_values, np.array(self.neighbor_score_mask[str(trophy.level)])[:, 1:])
+            mask_result = np.multiply(map_values, np.array(
+                self.neighbor_score_mask[str(trophy.level)])[:, 1:])
             density = np.sum(mask_result)
             pass
         elif trophy.shelf == 8:
             map_values = self.trophy_map[:, 6:]
-            mask_result = np.multiply(map_values, np.array(self.neighbor_score_mask[str(trophy.level)])[:, :2])
+            mask_result = np.multiply(map_values, np.array(
+                self.neighbor_score_mask[str(trophy.level)])[:, :2])
             density = np.sum(mask_result)
         else:
-            map_values = self.trophy_map[:, (trophy.shelf - 2): (trophy.shelf + 1)]
-            mask_result = np.multiply(map_values, np.array(self.neighbor_score_mask[str(trophy.level)]))
+            map_values = self.trophy_map[:,
+                                         (trophy.shelf - 2): (trophy.shelf + 1)]
+            mask_result = np.multiply(map_values, np.array(
+                self.neighbor_score_mask[str(trophy.level)]))
             density = np.sum(mask_result)
         return density
 
-    def calculate_difficulty(self, trophy):
-        difficulty = (trophy.w / (self.shelf_width / 2)) ** 8
+    @staticmethod
+    def calculate_difficulty(trophy):
+        # difficulty = (trophy.w / (self.shelf_width / 2)) ** 8
+        difficulty = abs(trophy.w)
         return difficulty
 
     def move_base(self):
-        self.pub_travel.publish(String("shelf{}".format(self.trophy_goal.shelf)))
+        self.pub_travel.publish(
+            String("shelf{}".format(self.trophy_goal.shelf)))
 
     def return_base(self):
         # self.move_base(self.base_x, self.base_y, self.base_alpha)
@@ -150,11 +176,21 @@ class Strategy:
             # pos = trophy[2] - (self.shelf_width / 2)
             pos = trophy[2]
             coord = trophy[3]
-            new = True
-            for i, t in enumerate(old_trophy_list):
-                if t.shelf == shelf & t.level == level & (abs(t.w - pos) < 0.2):
+            blacklisted = False
+            for t in self.trophy_blacklist:
+                if int(t.shelf) == int(shelf) and int(t.level) == int(level) and (math.dist([t.w], [pos]) < 0.1):
+                    blacklisted = True
+            if not blacklisted:
+                new = True
+                for i, t in enumerate(old_trophy_list):
+                    if int(t.shelf) == int(shelf) and int(t.level) == int(level) and (math.dist([t.w], [pos]) < 0.1):
+                        self.trophy_list[i].w = pos
+                        new = False
+                if new:
+                    trophy_id = "{}{}{}".format(
+                        level, shelf, self.trophy_map[level, shelf-1])
                     new_trophy = Trophy(
-                        trophy_id=t.trophy_id,
+                        trophy_id=trophy_id,
                         x=coord[0],
                         y=coord[1],
                         z=coord[2],
@@ -162,23 +198,14 @@ class Strategy:
                         level=level,
                         w=pos
                     )
-                    self.trophy_list[i] = new_trophy
-                    new = False
-            if new:
-                trophy_id = "{}{}{}".format(level, shelf, self.trophy_map[level, shelf-1])
-                new_trophy = Trophy(
-                    trophy_id=trophy_id,
-                    x=coord[0],
-                    y=coord[1],
-                    z=coord[2],
-                    shelf=shelf,
-                    level=level,
-                    w=pos
-                )
-                self.trophy_list.append(new_trophy)
+                    self.trophy_list.append(new_trophy)
+                    self.update_trophy_map()
+                old_trophy_list = copy.deepcopy(self.trophy_list)
+        self.trophy_list = sorted(
+            self.trophy_list, key=lambda x: (x.level, x.shelf))
         self.update_trophy_map()
         if self.mode == 1:
-            self.mode = 0
+            self.mode = 2
             self.gripper_adjustment()
         rospy.loginfo("Updated List")
         rospy.loginfo([str(t) for t in self.trophy_list])
@@ -193,6 +220,8 @@ class Strategy:
                 self.pub_gripper.publish(String("grip"))
             elif self.phase == 1:
                 self.pub_gripper.publish("deposit")
+        elif message == "OK LEFT" or message == "OK RIGHT":
+            self.pub_gripper.publish(String("adjusted"))
         elif message == "completed scouting":
             self.phase = 0
             self.travel_times()
@@ -208,6 +237,7 @@ class Strategy:
                     if trophy.trophy_id == self.trophy_goal.trophy_id:
                         del self.trophy_list[i]
                         rospy.loginfo("Deleted trophy from list")
+                    self.trophy_blacklist.append(self.trophy_goal)
                 rospy.loginfo("Updated trophy list")
                 rospy.loginfo([str(t) for t in self.trophy_list])
                 self.trophy_goal = None
@@ -220,12 +250,66 @@ class Strategy:
 
     def request_trophy_update(self):
         self.mode = 1
-        self.pub_trophy.publish(String("Image_request"))
+        self.pub_trophy.publish(String("Image_request::camera2"))
 
     def gripper_adjustment(self):
         for trophy in self.trophy_list:
             if trophy.trophy_id == self.trophy_goal.trophy_id:
-                self.pub_update.publish(Float32(trophy.w))
+
+                # Get position of gripper in odom frame.
+                [gripper_x, gripper_y] = self.gripper_in_odom()
+
+                # Subtract away (x,y)-position of trophy.
+                if (trophy.shelf == 1) or (trophy.shelf == 2) or (trophy.shelf == 3):
+                    # Take difference in y-direction.
+                    diff_left = trophy.y - gripper_y
+                    # trophy_position - gripper position
+                elif (trophy.shelf == 4) or (trophy.shelf == 5) or (trophy.shelf == 6):
+                    # Take difference in x-direction.
+                    diff_left = trophy.x - gripper_x
+                elif (trophy.shelf == 7):
+                    diff_left = gripper_y - trophy.y
+                else:   # shelf = 8
+                    diff_left = gripper_x - trophy.x
+
+                if diff_left >= 0:
+                    self.pub_left.publish(Float32(diff_left))
+                else:
+                    self.pub_right.publish(Float32(-1 * diff_left))
+
+    # Helper method for gripper_adjustment.
+    def gripper_in_odom(self):
+        success = False
+
+        # Point of gripper origin.
+        gripper_position = PointStamped()
+        # TODO Should this be 'time'?
+        gripper_position.header.stamp = rospy.Time.now()
+        gripper_position.header.frame_id = "wrist_3_link"
+        gripper_position.point.x = 0
+        gripper_position.point.y = 0
+        gripper_position.point.z = 0
+
+        print("Created gripper origin for transformation.")
+
+        try:
+            # TODO Need to deal with if time is 0 because the clock hasn't been published yet(?)? - http://wiki.ros.org/roscpp/Overview/Time
+
+            # Times out after 1 second. What happens if the buffer doesn't contain the
+            # transformation after this duration? [I think it throws an error]
+            # --> Even works with a duration of 0.001 - how does this work? TODO
+            gripper_odom = self.tf_buffer.transform(
+                gripper_position, 'odom', rospy.Duration(1))
+            print("Performed transform")
+
+            success = True
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            # TODO Need to add more details to this. Might just be doing it because the buffer isn't large enough yet.
+            # TODO Might need to revise this error message now that I've chopped things around.
+            print("Strategy TF transform error. Message:: {}".format(e))
+
+        # TODO Return success variable?
+        return [gripper_odom.point.x, gripper_odom.point.y]
 
 
 if __name__ == '__main__':

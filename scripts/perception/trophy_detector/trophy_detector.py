@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# FT 03/2021
 # Code based on https://opencv-tutorial.readthedocs.io/en/latest/yolo/yolo.html
 
 # YOLO object detection
@@ -97,8 +98,9 @@ def post_process(img, outputs, conf):
     return [img, centres]
 
 # TODO Temp - need to develop a custom message format
-def gen_msg_string(image_time, image_dimensions, centres):
+def gen_msg_string(image_time, image_frame, image_dimensions, centres):
     msg_string = "{}.{}".format(image_time.secs, image_time.nsecs)
+    msg_string += ";{}".format(image_frame)
     msg_string += ";{}.{}".format(image_dimensions[0], image_dimensions[1])
     for centre in centres:
         msg_string += ";{}.{}".format(centre[0], centre[1])
@@ -124,7 +126,7 @@ def on_image(image_msg):
     # Get the time the image was taken.
     image_time = image_msg.header.stamp
     image_dimensions = (image_msg.height, image_msg.width)
-    coord_pub.publish(gen_msg_string(image_time, image_dimensions, centres))
+    coord_pub.publish(gen_msg_string(image_time, image_msg.header.frame_id, image_dimensions, centres))
 
     # Publish image with bounding boxes
     if publish_images_with_bbs:
@@ -196,7 +198,7 @@ bridge = CvBridge()
 # longer reflect the true position of the robot), but the image stream will be less continuous.
 # Buffer size based on queue_size (1) x average message size
 # TODO Still need to experiment with buffer size
-image_sub = rospy.Subscriber("image_for_trophy_detection", Image, on_image)#, queue_size=1)
+image_sub = rospy.Subscriber("image_for_trophy_detection", Image, on_image, queue_size=1)
 
 # TODO Change this description if the camera being used changes from camera1.
 ###### Publishers (trophy coords, images with bounding boxes, camera1 image requests) ######

@@ -2,11 +2,13 @@
 # SA and FT, 4/5/21
 # Automate scouting process
 
-import rospy
+import sys, rospy
 from geometry_msgs.msg import Point, Pose, Quaternion
 from std_msgs.msg import String, Int16
 import enum
 import numpy as np
+import sys
+import math
 
 debug_output = True
 # Wait for tf to catch up.
@@ -15,7 +17,10 @@ wait_time = 0.5
 
 # Allows skipping of angles which don't have any shelves.
 #                  30  60  90  120 150 210 240 270 300 330 360
-rotation_angles = [30, 30, 30, 30, 30, 60, 30, 30, 30, 30, 30]  # Degrees
+#rotation_angles = [30, 30, 30, 30, 30, 60, 30, 30, 30, 30, 30]  # Degrees
+rotation_angles = [60, 60, 60, 30, 90, 30, 1]
+
+shutdown = False
 
 
 class Phases(enum.Enum):
@@ -39,7 +44,7 @@ def euler_to_quaternion(roll, pitch, yaw):
 def wait_for_start(msg_string):
     if (msg_string.data == "scout"):
         # Drive to scout pose
-        scout_pose = Pose(Point(-0.5, -2.0, 0.0), euler_to_quaternion(0, 0, 0))
+        scout_pose = Pose(Point(-0.5, -2.0, 0.0), euler_to_quaternion(0, 0, math.pi / 2))
         move_request_pub.publish(scout_pose)
 
         if debug_output:
@@ -50,12 +55,13 @@ def move_confirmed(msg_string):
     global phase
     global rotation_index
     global total_rotation
+    global shutdown
 
     if (phase == Phases.INITIAL):
         if (msg_string.data == "OK MOVE"):
             phase = Phases.SCOUTING
             # Request first image
-            image_request_pub.publish("Image_request")
+            image_request_pub.publish("Image_request::camera1")
         else:
             strat_notifier.publish("BAD scouting")
     elif (phase == Phases.SCOUTING) and (msg_string.data == "OK ROTATE"):
@@ -63,8 +69,10 @@ def move_confirmed(msg_string):
         total_rotation += rotation_angles[rotation_index]
 
         if (debug_output):
-            print("Scouting: one {}d rotation complete".format(rotation_angles[rotation_index]))
-            print("Scouting: turned through total rotation: {}d".format(total_rotation))  # Debug
+            print("Scouting: one {}d rotation complete".format(
+                rotation_angles[rotation_index]))
+            print("Scouting: turned through total rotation: {}d".format(
+                total_rotation))  # Debug
 
         rotation_index += 1
 
@@ -76,27 +84,27 @@ def move_confirmed(msg_string):
             phase = Phases.COMPLETE
             # Publish that scouting is complete.
             strat_notifier.publish("completed scouting")
-            # Shutting the node down [else there is erronous behaviour later on,
-            # when subsequent messages are sent on the subscribed topics].
-            # TODO Do we need to shut the publishers and subscribers down cleanly?
-            sys.exit(0)
+            # Shutting the node down.
+            shutdown = True
         else:
             # Request next image.
             if (debug_output):
                 print("Scouting: requesting image")
-            image_request_pub.publish("Image_request")
+            # Need to specify that we want to use camera1.
+            image_request_pub.publish("Image_request::camera1")
 
 
 def image_taken(msg_string):
     global rotation_index
 
-    if (msg_string.data == "Trophy_estimates_obtained"):
+    if (msg_string.data == "Trophy_estimates_obtained::camera1_lens"):
         if (debug_output):
             print("Scouting: image confirmation received")
 
         # Request the next rotation (see rotation_angles)
         if (debug_output):
-            print("################# Scouting:: rotation_index: {}".format(rotation_index))
+            print("################# Scouting:: rotation_index: {}".format(
+                rotation_index))
         turn_request_pub.publish(rotation_angles[rotation_index])
 
 
@@ -130,4 +138,10 @@ if (debug_output):
     print("Scouting: waiting to start...")
 
 while not rospy.is_shutdown():
-    rospy.spin()
+    if shutdown:
+        if (debug_output):
+            print("Scouting: shutting down node")
+        # Shutting the node down [else there is erronous behaviour later on,
+        # when subsequent messages are sent on the subscribed topics].
+        # TODO Do we need to shut the publishers and subscribers down cleanly?
+        sys.exit(0)

@@ -17,6 +17,14 @@ perhaps each with your own branch, or you can each have [different forks](https:
 
 > Please do not submit pull requests back to this repository - it is intended to serve as a template.  Feel free to report issues with the template though.
 
+## Run the program
+
+The first step is downloading the weights for the neural network from https://drive.google.com/file/d/1ESFDo8f49XlGB-oBHgf-u93HxaLl8cJI/view?usp=sharing. Afterwards the file needs to be placed inside 'farscope_project_entry/scripts/perception/trophy_detector'.
+
+The program can then be run by executing 'roslaunch farscope_project_entry integration.launch'.
+
+To visualise the map and trophy position estimates while the robot is running, open Rviz and load the configuration file 'farscope_project_entry/testing/rviz_perception_test_config.rviz'. This should be done immediately after launching the simulator.
+
 ## Controlling the robot
 
 In this section, we walk through the [`our_controller.py`](https://github.com/arthurrichards77/farscope_project_entry/blob/main/scripts/our_controller.py) example file.
