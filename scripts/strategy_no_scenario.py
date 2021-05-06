@@ -8,6 +8,8 @@ import sys
 import numpy as np
 import copy
 import math
+import tf2_ros
+from tf2_geometry_msgs import PointStamped
 
 
 class Trophy:
@@ -28,6 +30,10 @@ class Strategy:
     def __init__(self, data_file_path):
 
         rospy.init_node("strategy")
+
+        # Start tf buffer and listener
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
         with open(data_file_path) as data_file:
             data = json.load(data_file)
@@ -249,10 +255,61 @@ class Strategy:
     def gripper_adjustment(self):
         for trophy in self.trophy_list:
             if trophy.trophy_id == self.trophy_goal.trophy_id:
-                if trophy.w <= 0:
-                    self.pub_left.publish(Float32(trophy.w * 0.625))
+
+                # Get position of gripper in odom frame.
+                [gripper_x, gripper_y] = self.gripper_in_odom()
+
+                # Subtract away (x,y)-position of trophy.
+                if (trophy.shelf == 1) or (trophy.shelf == 2) or (trophy.shelf == 3) or (trophy.shelf == 7):
+                    # Take difference in y-direction.
+                    diff_left = trophy.y - gripper_y
+                    # trophy_position - gripper position
                 else:
-                    self.pub_right.publish(Float32(trophy.w * 0.625))
+                    # Take difference in x-direction.
+                    diff_left = trophy.x - gripper_x
+
+                if diff_left >= 0:
+                    self.pub_left.publish(Float32(diff_left))
+                else:
+                    self.pub_right.publish(Float32(-1 * diff_left))
+
+    # Helper method for gripper_adjustment.
+    def gripper_in_odom(self):
+        success = False
+
+        # Point of gripper origin.
+        gripper_position = PointStamped()
+        # TODO Should this be 'time'?
+        gripper_position.header.stamp = rospy.Time.now()
+        gripper_position.header.frame_id = "wrist_3_link"
+        gripper_position.point.x = 0
+        gripper_position.point.y = 0
+        gripper_position.point.z = 0
+
+        print("Created gripper origin for transformation.")
+
+        try:
+            # TODO Need to deal with if time is 0 because the clock hasn't been published yet(?)? - http://wiki.ros.org/roscpp/Overview/Time
+
+            # Now need to transform origin and position vector of one.
+            # Times out after 1 second. What happens if the buffer doesn't contain the
+            # transformation after this duration? [I think it throws an error]
+            # --> Even works with a duration of 0.001 - how does this work? TODO
+            gripper_odom = self.tf_buffer.transform(
+                gripper_position, 'odom', rospy.Duration(1))
+            print("Performed transform")
+
+            # gripper_posn_vec = np.array(
+            #     [cam_in_odom.point.x, cam_in_odom.point.y, cam_in_odom.point.z])
+
+            success = True
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            # TODO Need to add more details to this. Might just be doing it because the buffer isn't large enough yet.
+            # TODO Might need to revise this error message now that I've chopped things around.
+            print("Transform error ~ it's likely that the picture time predates the tf transform buffer. Image ignored.")
+            print("   Message:: {}".format(e))
+
+        return [gripper_odom.point.x, gripper_odom.point.y]
 
 
 if __name__ == '__main__':
