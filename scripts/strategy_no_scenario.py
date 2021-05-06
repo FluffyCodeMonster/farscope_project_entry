@@ -260,13 +260,17 @@ class Strategy:
                 [gripper_x, gripper_y] = self.gripper_in_odom()
 
                 # Subtract away (x,y)-position of trophy.
-                if (trophy.shelf == 1) or (trophy.shelf == 2) or (trophy.shelf == 3) or (trophy.shelf == 7):
+                if (trophy.shelf == 1) or (trophy.shelf == 2) or (trophy.shelf == 3):
                     # Take difference in y-direction.
                     diff_left = trophy.y - gripper_y
                     # trophy_position - gripper position
-                else:
+                elif (trophy.shelf == 4) or (trophy.shelf == 5) or (trophy.shelf == 6):
                     # Take difference in x-direction.
                     diff_left = trophy.x - gripper_x
+                elif (trophy.shelf == 7):
+                    diff_left = gripper_y - trophy.y
+                else:   # shelf = 8
+                    diff_left = gripper_x - trophy.x
 
                 if diff_left >= 0:
                     self.pub_left.publish(Float32(diff_left))
@@ -291,7 +295,6 @@ class Strategy:
         try:
             # TODO Need to deal with if time is 0 because the clock hasn't been published yet(?)? - http://wiki.ros.org/roscpp/Overview/Time
 
-            # Now need to transform origin and position vector of one.
             # Times out after 1 second. What happens if the buffer doesn't contain the
             # transformation after this duration? [I think it throws an error]
             # --> Even works with a duration of 0.001 - how does this work? TODO
@@ -299,16 +302,13 @@ class Strategy:
                 gripper_position, 'odom', rospy.Duration(1))
             print("Performed transform")
 
-            # gripper_posn_vec = np.array(
-            #     [cam_in_odom.point.x, cam_in_odom.point.y, cam_in_odom.point.z])
-
             success = True
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             # TODO Need to add more details to this. Might just be doing it because the buffer isn't large enough yet.
             # TODO Might need to revise this error message now that I've chopped things around.
-            print("Transform error ~ it's likely that the picture time predates the tf transform buffer. Image ignored.")
-            print("   Message:: {}".format(e))
+            print("Strategy TF transform error. Message:: {}".format(e))
 
+        # TODO Return success variable?
         return [gripper_odom.point.x, gripper_odom.point.y]
 
 
