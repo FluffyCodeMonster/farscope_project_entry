@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from std_msgs.msg import String, Float32, Int16, Float32MultiArray, Bool
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist, PointStamped
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, Twist
 import rospy
 import json
 import sys
@@ -9,6 +9,7 @@ import numpy as np
 import copy
 import math
 import tf2_ros
+from tf2_geometry_msgs import PointStamped
 
 
 class Trophy:
