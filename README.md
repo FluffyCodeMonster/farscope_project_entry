@@ -19,7 +19,7 @@ perhaps each with your own branch, or you can each have [different forks](https:
 
 ## Setup and Dependencies 
 
-To guarentee your system is using python3 run the following command within your terminal.
+To guarantee your system is using python3 run the following command within your terminal.
 `sudo apt-get install python-is-python3`
 
 To install all package dependencies run the following command.
